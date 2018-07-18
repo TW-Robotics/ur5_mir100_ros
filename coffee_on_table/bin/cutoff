@@ -1,0 +1,6 @@
+#! /usr/bin/env python
+
+import camera_image_manipulator.cutover
+
+if __name__ == '__main__':
+    camera_image_manipulator.cutover.main(0)

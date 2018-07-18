@@ -1,0 +1,6 @@
+#! /usr/bin/env python
+
+import find_mug_on_table.findover
+
+if __name__ == '__main__':
+    find_mug_on_table.findover.main(0)
