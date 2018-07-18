@@ -77,8 +77,10 @@ class rossinator:
 						print("center is: " + str(center_y) + ", " + str(center_x))
 						cv2.circle(self.depth_array,(center_x, center_y), 10, (0,0,0), -1)
 		
-
-		cv2.imshow('alternate image', self.depth_array)
+		windowName = "Depth image with circle"
+		cv2.namedWindow(windowName)
+		cv2.moveWindow(windowName, 800, 0)
+		cv2.imshow(windowName, self.depth_array)
 		cv2.waitKey(1)
 
 

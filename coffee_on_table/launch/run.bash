@@ -7,7 +7,7 @@ sleep 2
 xterm -hold -e "roslaunch realsense2_camera get_depth_cam.launch" &
 #xterm -hold -e "roslaunch realsense2_camera rs_aligned_depth.launch" &
 xterm -hold -e "roslaunch coffee_on_table yolotest.launch" &
-xterm -hold -e "rosrun coffee_on_table cupfind" &
+xterm -geometry 96x24+0-0 -hold -e "rosrun coffee_on_table cupfind" &
 #--------------------#
 #--- We are done! ---#
 #--------------------#
