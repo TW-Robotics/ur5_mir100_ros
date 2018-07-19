@@ -20,11 +20,15 @@ from sensor_msgs.msg import CompressedImage
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from darknet_ros_msgs.msg import BoundingBoxes
+from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import PointCloud2
+import sensor_msgs.point_cloud2 as pc2
 
 ''' Class to subscribe to
 		- Output-Image from YOLOnet with bounding boxes
 		- Output-Array of bounding boxes (Positions of edges)
 		- Kamera-Image where the depth-image is aligned to the color-image
+		- Kamera-Calibration data
 	Calculates the position of the center of the innerClass in the outerClass(e.g. center of cup on table)'''
 class rossinator:
 	# Initialize CVBridge
@@ -41,6 +45,11 @@ class rossinator:
 		rospy.Subscriber("/darknet_ros/detection_image", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
 		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
 		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
+		rospy.Subscriber("/camera/depth/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
+
+	# Get camera-info and make it accesible in the class
+	def cameraInfo_callback(self, data):
+		self.camInfo = data
 
 	# Check if there is a innerClass in an outerClass
 	def image_callback(self, data):
@@ -76,17 +85,26 @@ class rossinator:
 	def inner_in_outer(self):
 		foundInnerInOuter = False
 
+		# Check for box in box
 		for outer_box in self.currentBoundingBoxes.bounding_boxes:
 			if outer_box.Class == self.outerClass:
 				for inner_box in self.currentBoundingBoxes.bounding_boxes:
 					if inner_box.Class == self.innerClass and self.box_is_in_box(outer_box, inner_box):
 						center_x = inner_box.xmin+(inner_box.xmax-inner_box.xmin)/2
 						center_y = inner_box.ymin+(inner_box.ymax-inner_box.ymin)/2
-						print("center is: " + str(center_y) + ", " + str(center_x) + " Depth: " + str(self.depth_array[center_y][center_x]))
+						depth = self.depth_array[center_y][center_x]
+						# print("center is: " + str(center_y) + ", " + str(center_x) + " Depth: " + str(self.depth))
 						# Draw circle on center of bounding box of inner class
 						cv2.circle(self.cv_image,(center_x, center_y), 10, (0,0,0), -1)
 						foundInnerInOuter = True
-		
+
+						# Calculate coordinates in mm (Center of image is zero)
+						data = self.camInfo
+						z = depth
+						K = [[data.K[0], data.K[1], data.K[2]], [data.K[3], data.K[4], data.K[5]], [data.K[6], data.K[7], data.K[8]]]
+						[x, y, z] = np.dot(np.linalg.inv(K), [center_x*z, center_y*z, z])
+						print("Center of box in mm", x, y, z)
+
 		# Display depth-array with drawn circle
 		windowName = "Depth image with circle"
 		cv2.namedWindow(windowName)
