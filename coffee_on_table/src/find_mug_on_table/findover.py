@@ -45,7 +45,7 @@ class rossinator:
 		rospy.Subscriber("/darknet_ros/detection_image", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
 		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
 		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
-		rospy.Subscriber("/camera/depth/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
+		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
 
 	# Get camera-info and make it accesible in the class
 	def cameraInfo_callback(self, data):
