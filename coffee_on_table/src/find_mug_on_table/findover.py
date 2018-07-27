@@ -101,9 +101,12 @@ class rossinator:
 						# Calculate coordinates in mm (Center of image is zero)
 						data = self.camInfo
 						z = depth
-						K = [[data.K[0], data.K[1], data.K[2]], [data.K[3], data.K[4], data.K[5]], [data.K[6], data.K[7], data.K[8]]]
-						[x, y, z] = np.dot(np.linalg.inv(K), [center_x*z, center_y*z, z])
-						print("Center of box in mm", x, y, z)
+						if z != 0:
+							K = [[data.K[0], data.K[1], data.K[2]], [data.K[3], data.K[4], data.K[5]], [data.K[6], data.K[7], data.K[8]]]
+							[x, y, z] = np.dot(np.linalg.inv(K), [center_x*z, center_y*z, z])
+							print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
+						else:
+							print("Object is too far away. Come closer to get coordinates")
 
 		# Display depth-array with drawn circle
 		windowName = "Depth image with circle"
