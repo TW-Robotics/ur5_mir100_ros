@@ -138,11 +138,12 @@ class rossinator:
 		return False
 
 def main(args):
+	# Get and validate arguments
 	if len(sys.argv) < 3:
 		print("  ERROR: Too few arguments given!")
 		return
 
-	#Initializes and cleanup ros node
+	# Initialize ros-node and Class
 	rospy.init_node('cupfinder', anonymous=True)
 	cupOnTable = rossinator()
 	print('Searching for ' + cupOnTable.innerClass + ' ' + cupOnTable.strictness + ' ' + cupOnTable.outerClass)

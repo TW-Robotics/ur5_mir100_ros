@@ -5,4 +5,4 @@ import ur5_control.custom_test_moveXYZ
 import ur5_control.custom_test_move
 
 if __name__ == '__main__':
-    ur5_control.custom_test_moveXYZ.main()
+    ur5_control.custom_test_moveXYZ.main(sys.argv)
