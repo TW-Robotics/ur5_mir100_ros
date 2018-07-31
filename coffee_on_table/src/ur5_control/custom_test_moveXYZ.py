@@ -29,7 +29,7 @@ class ur5Controler(object):
 	def __init__(self):
 		super(ur5Controler, self).__init__()
 
-		# Set Robot speed and acceloration [0, 1]
+		# Set Robot speed and acceloration [0, 1] (only 0.1 steps)
 		self.speed = 0.1
 		self.acceleration = 0.1
 		self.speedScalingFactor = 0.05		# for timing of path-planning-points [very small eg 0.01, 1]
@@ -106,15 +106,16 @@ class ur5Controler(object):
 	def execute_move(self, goal):
 		self.setSpeed()
 
+		# if the goal is a pose
+		if type(goal) is Pose:
+			self.group.set_pose_target(goal)
+		else:
+			self.group.set_joint_value_target(goal)
+		self.group.plan()	# Show move in rviz
+
 		if self.confirmation(goal):
-			# if the goal is a pose
-			if type(goal) is Pose:
-				self.group.set_pose_target(goal)
-				self.group.go(wait=True)
-				self.group.clear_pose_targets()
-			else:
-				self.group.set_joint_value_target(goal)
-				self.group.go(goal, wait=True)
+			self.group.go(wait=True)
+			self.group.clear_pose_targets()
 			self.group.stop()
 
 	# Move the robot along a specified way (plan)
@@ -157,24 +158,24 @@ def main(args):
 		
 		# Move to up-Position
 		print "Moving home"
-	#	ur5.go_home()
-		
+		ur5.go_home()
+
 		# Move to pose
 		# Info: Get actual pose: rosrun tf tf_echo base_link tool0
 		print "Moving to pose"
 		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
-	#	ur5.move_to_pose(goalPose)
+		ur5.move_to_pose(goalPose)
 
 		# Move to x/y/z-position (incremental)
 		print "Moving xyz-incremental"
 		x_inc = 0
 		y_inc = 0.1
 		z_inc = -0.1
-	#	ur5.move_xyz(x_inc, y_inc, z_inc)
+		ur5.move_xyz(x_inc, y_inc, z_inc)
 
 		# Move along a cartesian path
 		print "Moving along cartesian path"
-	#	ur5.move_cartesian_path(x_inc, y_inc, z_inc)
+		ur5.move_cartesian_path(x_inc, y_inc, z_inc)
 		
 		# Move to joint-orientations
 		print "Moving to joint-orientations"
