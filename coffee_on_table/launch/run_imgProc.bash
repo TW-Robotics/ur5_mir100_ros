@@ -2,7 +2,7 @@
 echo "Running ROS stuff..."
 echo "Starting roscore"
 xterm -e "roscore" &
-sleep 2
+sleep 3
 #xterm -hold -e "roslaunch src/yolotest/usbcam.launch" &
 xterm -hold -e "roslaunch coffee_on_table bringUp_camera.launch" &
 #xterm -hold -e "roslaunch realsense2_camera rs_aligned_depth.launch" &
