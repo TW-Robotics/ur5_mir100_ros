@@ -52,6 +52,7 @@
       <arg name="depth_height"             value="$(arg depth_height)"/>
       <arg name="enable_depth"             value="$(arg enable_depth)"/>
 
+
       <arg name="color_width"              value="$(arg color_width)"/>
       <arg name="color_height"             value="$(arg color_height)"/>
       <arg name="enable_color"             value="$(arg enable_color)"/>

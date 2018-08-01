@@ -1,0 +1,4 @@
+<launch>
+	<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="2 0 0 0 0 0 1 ee_link camera_link 100" /> <!-- 100ms = 10Hz-->
+	<node pkg="coffee_on_table" type="camera_tf_listener.py" name="camera_base_listener" />
+</launch>

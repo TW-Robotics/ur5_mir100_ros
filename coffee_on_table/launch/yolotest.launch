@@ -16,7 +16,7 @@
   <node pkg="darknet_ros" type="darknet_ros" name="darknet_ros" output="screen" launch-prefix="$(arg launch_prefix)">
     <param name="weights_path"          value="$(arg yolo_weights_path)" />
     <param name="config_path"           value="$(arg yolo_config_path)" />
-    <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw" />
+    <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw_rotated" />
     <!--<remap from="/camera/rgb/image_raw" to="/webcam/image_raw" />-->
   </node>
 

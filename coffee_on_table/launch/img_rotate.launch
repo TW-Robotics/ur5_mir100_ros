@@ -1,0 +1,5 @@
+<launch>
+	<node pkg="coffee_on_table" type="image_rotate.py" name="camera_rotate">
+		<param name="rotation_angle" value="180" />
+	</node>
+</launch>
