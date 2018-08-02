@@ -1,9 +1,0 @@
-#! /usr/bin/env python
-
-import sys
-import tf_transform.camera_tf_broadcaster
-import tf_transform.camera_tf_listener
-
-if __name__ == '__main__':
-	#tf_transform.camera_tf_broadcaster.main(sys.argv)
-	tf_transform.camera_tf_listener.main(sys.argv)
