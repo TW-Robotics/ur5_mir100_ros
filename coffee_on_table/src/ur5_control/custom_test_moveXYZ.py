@@ -40,6 +40,17 @@ class ur5Controler(object):
 		group_name = "manipulator"
 		self.group = moveit_commander.MoveGroupCommander(group_name)
 
+		# Publisher for Robot-Trajectory
+		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+
+	# Publish the robot's trajectory
+	def display_trajectory(self, plan):
+		rospy.sleep(2)
+		traj = moveit_msgs.msg.DisplayTrajectory()
+		traj.trajectory_start = self.robot.get_current_state()
+		traj.trajectory.append(plan)
+		self.trajectory_pub.publish(traj)
+
 	# Move robot to upright position
 	def go_home(self):
 		# Upright position: 0.005937059875577688, -1.5655563513385218, -0.00637227693666631, -1.5696209112750452, 0.009078050963580608, 0.01515068206936121]
@@ -111,7 +122,8 @@ class ur5Controler(object):
 			self.group.set_pose_target(goal)
 		else:
 			self.group.set_joint_value_target(goal)
-		self.group.plan()	# Show move in rviz
+		plan = self.group.plan()	# Show move in rviz
+		self.display_trajectory(plan)
 
 		if self.confirmation(goal):
 			self.group.go(wait=True)
@@ -122,6 +134,7 @@ class ur5Controler(object):
 	def execute_plan(self, plan):	#TODO
 		# Retime all timestamps of the way-points to make the robot move at a specified speed
 		plan = self.group.retime_trajectory(self.robot.get_current_state(), plan, self.speedScalingFactor)
+		self.display_trajectory(plan)
 
 		if self.confirmation(plan):
 			self.group.execute(plan, wait=True)
