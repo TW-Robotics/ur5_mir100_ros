@@ -28,7 +28,7 @@ def main(args):
 	listener = tf.TransformListener()
 
 	# Init Publisher for camToBase Transformation
-	camToBasePub = rospy.Publisher("/tf_camToBase",Pose, queue_size=1)
+	camToBasePub = rospy.Publisher("/tf_camToBase", Pose, queue_size=1)
 
 	# Do at a frequency of 10 Hz
 	rate = rospy.Rate(10.0)
