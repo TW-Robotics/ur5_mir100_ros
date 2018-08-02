@@ -22,6 +22,7 @@ from sensor_msgs.msg import Image
 from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import PointCloud2
+from geometry_msgs.msg import Pose
 import sensor_msgs.point_cloud2 as pc2
 
 ''' Class to subscribe to
@@ -35,17 +36,35 @@ class rossinator:
 	bridge = CvBridge()
 	# Initialize class-variable to store bounding boxes
 	currentBoundingBoxes = BoundingBoxes()
-	outerClass = sys.argv[1]
-	innerClass = sys.argv[2]
-	strictness = sys.argv[3]
+
+	onlyOneClass = False
+	innerClass = ""
+	outerClass = ""
+	strictness = ""
 
 	def __init__(self):
+		# Get and validate arguments
+		if len(sys.argv) == 2:
+			self.onlyOneClass = True
+		elif len(sys.argv) < 3:
+			print("  ERROR: Too few arguments given!")
+			return
+		self.innerClass = sys.argv[1]
+		if self.onlyOneClass == False:
+			self.outerClass = sys.argv[2]
+			self.strictness = sys.argv[3]
+
 		# Initialize Publisher and Subscribers
 		mypub = rospy.Publisher("/roi",CompressedImage, queue_size=1)	#TODO Not used yet
 		rospy.Subscriber("/darknet_ros/detection_image", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
 		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
 		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
 		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
+		rospy.Subscriber("/tf_camToBase", Pose, self.camPose_callback, queue_size=1)		# Camera Position and Orientation (dependent on robot pose)
+
+	# Get the pose of the camera dependent on the robot pose
+	def camPose_callback(self, data):
+		self.camPose = data
 
 	# Get camera-info and make it accesible in the class
 	def cameraInfo_callback(self, data):
@@ -87,7 +106,7 @@ class rossinator:
 
 		# Check for box in box
 		for outer_box in self.currentBoundingBoxes.bounding_boxes:
-			if outer_box.Class == self.outerClass:
+			if outer_box.Class == self.outerClass or self.onlyOneClass == True:
 				for inner_box in self.currentBoundingBoxes.bounding_boxes:
 					if inner_box.Class == self.innerClass and self.box_is_in_box(outer_box, inner_box):
 						center_x = inner_box.xmin+(inner_box.xmax-inner_box.xmin)/2
@@ -132,17 +151,12 @@ class rossinator:
 			if center_x > outer_box.xmin and center_x < outer_box.xmax and center_y > outer_box.ymin and center_y < outer_box.ymax:
 				return True
 
-		if self.strictness == 'outside':
+		if self.strictness == 'outside' or self.onlyOneClass == True:
 			return True
 
 		return False
 
 def main(args):
-	# Get and validate arguments
-	if len(sys.argv) < 3:
-		print("  ERROR: Too few arguments given!")
-		return
-
 	# Initialize ros-node and Class
 	rospy.init_node('cupfinder', anonymous=True)
 	cupOnTable = rossinator()

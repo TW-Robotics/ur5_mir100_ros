@@ -5,33 +5,42 @@ import rospy
 import math
 import tf
 import geometry_msgs.msg
+from geometry_msgs.msg import Pose
 import sys
 
+# Convert lists to pose-obect so only 1 object has to be published
+def listToPose(trans, rot):
+	pose = geometry_msgs.msg.Pose()
+	pose.position.x = trans[0]
+	pose.position.y = trans[1]
+	pose.position.z = trans[2]
+	pose.orientation.x = rot[0]
+	pose.orientation.y = rot[1]
+	pose.orientation.z = rot[2]
+	pose.orientation.w = rot[3]
+	return pose
+
 def main(args):
-	print "ino"
+	# Init Node
 	rospy.init_node('camera_tf_listener')
-
+	
+	# Init Listener for tf-transformation
 	listener = tf.TransformListener()
-	print "in"
-	#rospy.wait_for_service('spawn')
-	#spawner = rospy.ServiceProxy('spawn', turtlesim.srv.Spawn)
-	#spawner(4, 2, 0, 'turtle2')
 
-	#turtle_vel = rospy.Publisher('turtle2/cmd_vel', geometry_msgs.msg.Twist,queue_size=1)
+	# Init Publisher for camToBase Transformation
+	camToBasePub = rospy.Publisher("/tf_camToBase",Pose, queue_size=1)
 
 	# Do at a frequency of 10 Hz
 	rate = rospy.Rate(10.0)
 	while not rospy.is_shutdown():
 		try:
-			print "go"
-			(trans,rot) = listener.lookupTransform('/camera_link', '/base_link', rospy.Time(0))
+			(trans, rot) = listener.lookupTransform('/camera_link', '/base_link', rospy.Time(0))
+			#(trans, rot) = listener.lookupTransform('/camera_link', '/camera_color_frame', rospy.Time(0))
+			camToBasePub.publish(listToPose(trans, rot))
 		except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 			continue
 
 		rate.sleep()
-		print trans
-		print rot
-	print "done"
 
 if __name__ == '__main__':
 	main(sys.argv)
