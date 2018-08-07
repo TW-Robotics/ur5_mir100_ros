@@ -62,6 +62,9 @@ class rossinator:
 		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
 		rospy.Subscriber("/tf_camToBase", Pose, self.camPose_callback, queue_size=1)		# Camera Position and Orientation (dependent on robot pose)
 
+		#self.cup_size_middler = 0
+		#self.cup_size_middler_count = 0
+
 	# Get the pose of the camera dependent on the robot pose
 	def camPose_callback(self, data):
 		self.camPose = data
@@ -80,7 +83,7 @@ class rossinator:
 
 		# Check if there is a inner class in an outer class in the image and display message
 		if self.inner_in_outer():
-			print('Found ' + self.innerClass + ' ' + self.strictness + ' ' + self.outerClass)
+			a = 1#print('Found ' + self.innerClass + ' ' + self.strictness + ' ' + self.outerClass)
 
 
 
@@ -114,20 +117,33 @@ class rossinator:
 						cv2.circle(self.cv_depth_image,(center_x, center_y), 10, (0,0,0), -1)
 						foundInnerInOuter = True
 
-						# Calculate coordinates in mm (Center of image is zero)
-						data = self.camInfo
-						z = depth
-						if z != 0:
-							K = [[data.K[0], data.K[1], data.K[2]], [data.K[3], data.K[4], data.K[5]], [data.K[6], data.K[7], data.K[8]]]
-							[x, y, z] = np.dot(np.linalg.inv(K), [center_x*z, center_y*z, z])
-							print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
-						else:
-							print("Object is too far away. Come closer to get coordinates")
+						# Caluclate coordinates in mm (Center of image is zero)
+						if depth == 0:		# approximate if there is no depth-data
+							print "APPROXIMATION: "
+							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
+						[x, y, z] = self.calculate_center_coordinates(center_x, center_y, depth)
+						print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
+						
+						# Old + Debug
+						#else:
+							#print("Object is too far away. Come closer to get coordinates")
 
-						cropped_encoded_img = self.cv_rgb_image[inner_box.ymin:inner_box.ymax,inner_box.xmin:inner_box.xmax]
+						#cropped_encoded_img = self.cv_rgb_image[inner_box.ymin:inner_box.ymax,inner_box.xmin:inner_box.xmax]
+						#print "measured: " + str(z)
+						#print "calculat: " + str(self.distance_to_cup_approximator(inner_box.xmax-inner_box.xmin))
+						#print " "
 
+						# For measurement of approximation-parameters
+						#if self.cup_size_middler_count < 50:
+						#	self.cup_size_middler_count = self.cup_size_middler_count+1
+						#	self.cup_size_middler = self.cup_size_middler + inner_box.xmax-inner_box.xmin
 
-						print "distance to box is" + str(self.distance_to_cup_approximator(inner_box.xmax-inner_box.xmin))
+						#if self.cup_size_middler_count == 50:
+						#	print self.cup_size_middler/50
+						#	self.cup_size_middler = 0
+						#	self.cup_size_middler_count = 0
+
+						#print inner_box.xmax-inner_box.xmin
 
 		# Display depth-array with drawn circle
 		windowName = "Depth image with circle"
@@ -141,9 +157,17 @@ class rossinator:
 			return True
 		return False
 
-	#interpolation function based on real measurements
-	def distance_to_cup_approximator(self, px_width):
-		return -0.34*px_width+83.1
+	# Interpolation function based on real measurements
+	def distance_to_object_approximator(self, px_width):
+		# Parameters can be found in excel-sheet. Times 10 to calculate distance in mm
+		return 5474.6*(px_width**-1.015)*10
+
+	# Calculate coordinates in mm (Center of image is zero)
+	def calculate_center_coordinates(self, center_x, center_y, z):
+		data = self.camInfo
+		K = [[data.K[0], data.K[1], data.K[2]], [data.K[3], data.K[4], data.K[5]], [data.K[6], data.K[7], data.K[8]]]
+		[x, y, z] = np.dot(np.linalg.inv(K), [center_x*z, center_y*z, z])
+		return [x, y, z]
 
 	# Return True if inner box is in outer box (accroding to strictness), otherwise False
 	def box_is_in_box(self, outer_box, inner_box):
