@@ -23,7 +23,11 @@ from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Point
 import sensor_msgs.point_cloud2 as pc2
+
+# for publishing coordinate frame
+import tf
 
 ''' Class to subscribe to
 		- Output-Image from YOLOnet with bounding boxes
@@ -55,8 +59,9 @@ class rossinator:
 			self.strictness = sys.argv[3]
 
 		# Initialize Publisher and Subscribers
-		mypub = rospy.Publisher("/roi", CompressedImage, queue_size=1)	#TODO Not used yet
-		rospy.Subscriber("/darknet_ros/detection_image", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
+		self.mypub = rospy.Publisher("/roi", CompressedImage, queue_size=1)	#TODO Not used yet
+		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Point, queue_size=1)	# Publish xyz-Position of object
+		rospy.Subscriber("/camera/color/image_raw_rotated", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
 		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
 		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
 		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
@@ -122,6 +127,11 @@ class rossinator:
 							print "APPROXIMATION: "
 							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
 						[x, y, z] = self.calculate_center_coordinates(center_x, center_y, depth)
+						obj_center_point = Point()
+						obj_center_point.x = x / 1000
+						obj_center_point.y = y / 1000
+						obj_center_point.z = z / 1000
+						self.object_pos_pub.publish(obj_center_point)
 						print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
 						
 						# Old + Debug
@@ -129,10 +139,7 @@ class rossinator:
 							#print("Object is too far away. Come closer to get coordinates")
 
 						#cropped_encoded_img = self.cv_rgb_image[inner_box.ymin:inner_box.ymax,inner_box.xmin:inner_box.xmax]
-						#print "measured: " + str(z)
-						#print "calculat: " + str(self.distance_to_cup_approximator(inner_box.xmax-inner_box.xmin))
-						#print " "
-
+						#self.find_cup(cropped_encoded_img)						
 						# For measurement of approximation-parameters
 						#if self.cup_size_middler_count < 50:
 						#	self.cup_size_middler_count = self.cup_size_middler_count+1
@@ -185,6 +192,23 @@ class rossinator:
 			return True
 
 		return False
+
+	def find_cup(self, cropped_encoded_img):
+
+		grey_img = cv2.cvtColor(cropped_encoded_img,cv2.COLOR_BGR2GRAY)
+		ret, thresh = cv2.threshold(grey_img,127,255,0)
+		_, contours, h = cv2.findContours(thresh,1,2)
+		largest = None
+		for contour in contours:
+			approx = cv2.approxPolyDP(contour,0.01*cv2.arcLength(contour,True),True)
+			if len(approx) == 4:
+				if largest is None or cv2.contourArea(contour) > cv2.contourArea(largest):
+					largest = contour
+
+		if largest != None:
+			cv2.drawContours(cropped_encoded_img,[largest],0,(0,0,255),3)
+		cv2.imshow('puppy', cropped_encoded_img)
+		cv2.waitKey(1)
 
 def main(args):
 	# Initialize ros-node and Class
