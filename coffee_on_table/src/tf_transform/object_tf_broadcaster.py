@@ -25,7 +25,7 @@ def main(args):
 	rate = rospy.Rate(10)
 
 	while not rospy.is_shutdown():
-		br.sendTransform((obj_center_point.x, obj_center_point.y, obj_center_point.z),
+		br.sendTransform((obj_center_point.y, -obj_center_point.x, obj_center_point.z),
 						 (0.0, 0.0, 0.0, 1.0),
 						 rospy.Time.now(),
 						 "obj_center_pose",

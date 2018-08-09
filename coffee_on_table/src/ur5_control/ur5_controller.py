@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import time
+import math
 import roslib; #roslib.load_manifest('ur_driver')
 import rospy
 import sys
@@ -8,6 +9,8 @@ import copy
 import moveit_commander
 import moveit_msgs.msg
 import geometry_msgs.msg
+import tf
+
 from geometry_msgs.msg import Pose
 from moveit_msgs.msg import RobotState
 from moveit_msgs.msg import RobotTrajectory
@@ -18,11 +21,14 @@ from control_msgs.msg import *
 from trajectory_msgs.msg import *
 from math import pi
 
+
 # Source: http://docs.ros.org/kinetic/api/moveit_commander/html/move__group_8py_source.html
 # Class behind: http://docs.ros.org/kinetic/api/moveit_ros_planning_interface/html/classmoveit_1_1planning__interface_1_1MoveGroupInterface.html
 
 # Set True to make the program ask before the robot moves
 checkBeforeDo = True
+
+onceFlag = False
 
 # Class to control and move the ur5-robot
 class ur5Controler(object):
@@ -30,8 +36,8 @@ class ur5Controler(object):
 		super(ur5Controler, self).__init__()
 
 		# Set Robot speed and acceloration [0, 1] (only 0.1 steps)
-		self.speed = 0.1
-		self.acceleration = 0.1
+		self.speed = 1
+		self.acceleration = 1
 		self.speedScalingFactor = 0.05		# for timing of path-planning-points [very small eg 0.01, 1]
 
 		# Init moveit_commander
@@ -42,6 +48,91 @@ class ur5Controler(object):
 
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+		rospy.Subscriber("/tf_objToBase", Pose, self.baseToObj_callback, queue_size=1)
+
+	def baseToObj_callback(self, data):
+		global desiredPose
+		global onceFlag
+		desiredPose = Pose()
+		theta = math.atan2(data.position.y, data.position.x)
+
+		r = 0.4
+		h = 0.6
+
+		desiredPose.position.x = r*math.sin(theta)
+		desiredPose.position.y = r*math.cos(theta)
+		desiredPose.position.z = h
+
+		phi = math.atan2((data.position.z - desiredPose.position.z), (data.position.y - desiredPose.position.y))
+		quaternion = tf.transformations.quaternion_from_euler(phi,0,0)
+
+		print "quats"
+		print quaternion
+
+		print data.position.z
+		print desiredPose.position.z
+
+		print data.position.y
+		print desiredPose.position.y
+
+		print "z and y"
+		print data.position.z - desiredPose.position.z
+		print data.position.y - desiredPose.position.y
+
+		#print "y and x"
+		#print data.position.y
+		#print data.position.x
+
+		#print theta*180/pi
+		#print phi*180/pi
+		#print " "
+
+		if onceFlag == False:
+			# drive to position where r = 0.4 and h = 0.6
+			jointStates = [-0.258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
+			self.execute_move(jointStates)
+			onceFlag = True
+
+		goal_jointStates = self.group.get_current_joint_values()
+		angle_to_go_t = theta - goal_jointStates[0]
+		angle_to_go_p = phi - goal_jointStates[3]
+
+
+
+		print "actual:"
+		#print goal_jointStates[0]*180/pi
+		print goal_jointStates[3]*180/pi
+
+		print "to go:"
+		#print angle_to_go_t*180/pi
+		print angle_to_go_p*180/pi
+
+		print "goal"
+		#print theta*180/pi
+		print phi*180/pi
+
+		print "vorschlag"
+		print (goal_jointStates[3] + phi)*180/pi
+
+		if phi < 0:
+			phi = pi+phi
+			print "phi < 0"
+			print phi*180/pi
+
+		#print "move joint 1"
+		#self.move_joint_to_target(0, theta)
+		print "move joint 4"
+		self.move_joint_to_target(3, goal_jointStates[3] + phi)
+
+		desiredPose = self.group.get_current_pose().pose
+
+		desiredPose.orientation.x = quaternion[0]
+		desiredPose.orientation.y = quaternion[1]
+		desiredPose.orientation.z = quaternion[2]
+		desiredPose.orientation.w = quaternion[3]
+
+		#self.execute_move(desiredPose)
+		rospy.sleep(2)
 
 	# Publish the robot's trajectory
 	def display_trajectory(self, plan):
@@ -113,6 +204,14 @@ class ur5Controler(object):
 		# Call function to move robot
 		self.execute_move(goal_jointStates)
 
+	def move_joint_to_target(self, jointNr, angleRad):
+		# Set goal to current joint values and overwrite the relevant angle
+		goal_jointStates = self.group.get_current_joint_values()
+		goal_jointStates[jointNr] = angleRad
+
+		# Call function to move robot
+		self.execute_move(goal_jointStates)
+
 	# Move the robot to goal pose or orientation
 	def execute_move(self, goal):
 		self.setSpeed()
@@ -168,9 +267,16 @@ def main(args):
 		# Initialize ros-node and Class
 		rospy.init_node('ur5-controler', anonymous=True)
 		ur5 = ur5Controler()
+
+		rospy.spin()
+
+		#while True:
+		#	ur5.execute_move(desiredPose)
+		#	rospy.sleep(2)
+
 		
 		# Move to up-Position
-		print "Moving home"
+		'''print "Moving home"
 		ur5.go_home()
 
 		# Move to pose
@@ -200,8 +306,9 @@ def main(args):
 		jointNr = 1			# 1 to 6
 		angleDeg_inc = 90
 		ur5.move_joint(jointNr, angleDeg_inc)
-
+		'''
 		#ur5.go_home()
+		
 
 	except KeyboardInterrupt:
 		rospy.signal_shutdown("KeyboardInterrupt")
