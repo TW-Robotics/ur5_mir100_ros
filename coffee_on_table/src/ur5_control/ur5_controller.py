@@ -27,7 +27,7 @@ from math import pi
 # Class behind: http://docs.ros.org/kinetic/api/moveit_ros_planning_interface/html/classmoveit_1_1planning__interface_1_1MoveGroupInterface.html
 
 # Set True to make the program ask before the robot moves
-checkBeforeDo = True
+checkBeforeDo = False
 
 # Class to control and move the ur5-robot
 class ur5Controler(object):
@@ -58,11 +58,15 @@ class ur5Controler(object):
 	def baseToObj_callback(self, data):
 		self.baseToObj = data
 
-	def followObject(self):
+	def moveToSearchPose(self):
 		# drive to position where r = 0.4 and h = 0.6
 		jointStates = [-0.258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
+		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
 
+	def followObject(self):
+		#self.moveToSearchPose()
+		#rospy.sleep(5)
 		while True:
 			print "move joint 1"
 			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
@@ -76,9 +80,21 @@ class ur5Controler(object):
 			print "goal: " + str((act_jointStates[3] + (pi/2 - phi))*180/pi)
 			self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
 
+			# Move joints simulatenously
+			#goal_jointStates = act_jointStates
+			#goal_jointStates[0] = theta
+			#goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
+			#self.execute_move(goal_jointStates)
+
+	def searchObject(self):
+		self.moveToSearchPose()
+		while self.camToObj.x == 0 and self.camToObj.y == 0 and self.camToObj.z == 0:
+			#print self.camToObj
+			self.move_joint(0, 10)
+
 	# Publish the robot's trajectory
 	def display_trajectory(self, plan):
-		rospy.sleep(2)
+		#rospy.sleep(2)
 		traj = moveit_msgs.msg.DisplayTrajectory()
 		traj.trajectory_start = self.robot.get_current_state()
 		traj.trajectory.append(plan)
@@ -141,7 +157,7 @@ class ur5Controler(object):
 
 		# Set goal to current joint values and overwrite the relevant angle
 		goal_jointStates = self.group.get_current_joint_values()
-		goal_jointStates[jointNr-1] = goal_jointStates[jointNr-1] + angleRad_inc
+		goal_jointStates[jointNr] = goal_jointStates[jointNr] + angleRad_inc
 
 		# Call function to move robot
 		self.execute_move(goal_jointStates)
@@ -166,6 +182,7 @@ class ur5Controler(object):
 		plan = self.group.plan()	# Show move in rviz
 		self.display_trajectory(plan)
 
+		rospy.sleep(0.05)	# Give time for keyboard-interrupt
 		if self.confirmation(goal):
 			self.group.go(wait=True)
 			self.group.clear_pose_targets()
@@ -177,6 +194,7 @@ class ur5Controler(object):
 		plan = self.group.retime_trajectory(self.robot.get_current_state(), plan, self.speedScalingFactor)
 		self.display_trajectory(plan)
 
+		rospy.sleep(0.05)	# Give time for keyboard-interrupt
 		if self.confirmation(plan):
 			self.group.execute(plan, wait=True)
 
@@ -210,6 +228,7 @@ def main(args):
 		rospy.init_node('ur5-controler', anonymous=True)
 		ur5 = ur5Controler()
 
+		ur5.searchObject()
 		ur5.followObject()
 
 		#rospy.spin()
@@ -247,7 +266,7 @@ def main(args):
 
 		# Move one specific joint one specific angle
 		print "Moving one joint"
-		jointNr = 1			# 1 to 6
+		jointNr = 0			# 0 to 5
 		angleDeg_inc = 90
 		ur5.move_joint(jointNr, angleDeg_inc)
 		'''
