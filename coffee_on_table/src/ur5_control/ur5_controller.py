@@ -12,6 +12,7 @@ import geometry_msgs.msg
 import tf
 
 from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Point
 from moveit_msgs.msg import RobotState
 from moveit_msgs.msg import RobotTrajectory
 from sensor_msgs.msg import JointState
@@ -32,7 +33,6 @@ onceFlag = False
 
 # Class to control and move the ur5-robot
 class ur5Controler(object):
-	wrist1ToObj = Pose()
 	def __init__(self):
 		super(ur5Controler, self).__init__()
 
@@ -50,9 +50,9 @@ class ur5Controler(object):
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 		rospy.Subscriber("/tf_objToBase", Pose, self.baseToObj_callback, queue_size=1)
-		rospy.Subscriber("/tf_objToWrist1Pub", Pose, self.wrist1ToObj_callback, queue_size=1)
+		rospy.Subscriber("/tf_objToCam", Point, self.wristToObj_callback, queue_size=1)
 
-	def wrist1ToObj_callback(self, data):
+	def wristToObj_callback(self, data):
 		self.wrist1ToObj = data
 
 	def baseToObj_callback(self, data):
@@ -131,13 +131,11 @@ class ur5Controler(object):
 		self.move_joint_to_target(0, theta)
 		print "move joint 4"
 
-		phi = math.atan2(self.wrist1ToObj.position.x, self.wrist1ToObj.position.z)
+		phi = math.atan2(self.wrist1ToObj.z, self.wrist1ToObj.y)
 		quaternion = tf.transformations.quaternion_from_euler(phi,0,0)
 
 		print "x, y, z"
-		print self.wrist1ToObj.position.x
-		print self.wrist1ToObj.position.y
-		print self.wrist1ToObj.position.z
+		print self.wrist1ToObj
 
 		print "actual:"
 		#print goal_jointStates[0]*180/pi
@@ -151,12 +149,12 @@ class ur5Controler(object):
 		#print theta*180/pi
 		print phi*180/pi
 		#phi = pi/2 - phi
-		#print phi*180/pi
+		print (pi/2-phi)*180/pi
 
 		print "vorschlag zielstate"
-		print (goal_jointStates[3] - (pi/2 - phi))*180/pi
+		print (goal_jointStates[3] + (pi/2-phi))*180/pi
 
-		self.move_joint_to_target(3, goal_jointStates[3] - (pi/2 - phi))#goal_jointStates[3] + phi)
+		self.move_joint_to_target(3, goal_jointStates[3] + (pi/2-phi))#goal_jointStates[3] + phi)
 
 		desiredPose = self.group.get_current_pose().pose
 
