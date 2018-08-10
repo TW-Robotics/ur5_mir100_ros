@@ -29,14 +29,17 @@ def main(args):
 
 	# Init Publisher for camToBase Transformation
 	objToBasePub = rospy.Publisher("/tf_objToBase", Pose, queue_size=1)
+	objToWrist1Pub = rospy.Publisher("/tf_objToWrist1Pub", Pose, queue_size=1)
 
 	# Do at a frequency of 10 Hz
 	rate = rospy.Rate(10.0)
 	while not rospy.is_shutdown():
 		try:
 			(trans, rot) = listener.lookupTransform('/base_link', '/obj_center_pose', rospy.Time(0))
+			(trans1, rot1) = listener.lookupTransform('/wrist_1_link', '/obj_center_pose', rospy.Time(0))
 			#(trans, rot) = listener.lookupTransform('/camera_link', '/camera_color_frame', rospy.Time(0))
 			objToBasePub.publish(listToPose(trans, rot))
+			objToWrist1Pub.publish(listToPose(trans1, rot1))
 		except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 			continue
 

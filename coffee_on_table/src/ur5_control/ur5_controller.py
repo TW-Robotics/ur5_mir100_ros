@@ -32,6 +32,7 @@ onceFlag = False
 
 # Class to control and move the ur5-robot
 class ur5Controler(object):
+	wrist1ToObj = Pose()
 	def __init__(self):
 		super(ur5Controler, self).__init__()
 
@@ -49,6 +50,10 @@ class ur5Controler(object):
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 		rospy.Subscriber("/tf_objToBase", Pose, self.baseToObj_callback, queue_size=1)
+		rospy.Subscriber("/tf_objToWrist1Pub", Pose, self.wrist1ToObj_callback, queue_size=1)
+
+	def wrist1ToObj_callback(self, data):
+		self.wrist1ToObj = data
 
 	def baseToObj_callback(self, data):
 		global desiredPose
@@ -63,21 +68,26 @@ class ur5Controler(object):
 		desiredPose.position.y = r*math.cos(theta)
 		desiredPose.position.z = h
 
-		phi = math.atan2((data.position.z - desiredPose.position.z), (data.position.y - desiredPose.position.y))
+		#phi = math.atan2((self.wrist1ToObj.position.z - desiredPose.position.z), (self.wrist1ToObj.position.y - desiredPose.position.y))
+		'''phi = math.atan2(self.wrist1ToObj.position.z, self.wrist1ToObj.position.y)
 		quaternion = tf.transformations.quaternion_from_euler(phi,0,0)
 
-		print "quats"
-		print quaternion
-
-		print data.position.z
-		print desiredPose.position.z
-
-		print data.position.y
-		print desiredPose.position.y
-
 		print "z and y"
-		print data.position.z - desiredPose.position.z
-		print data.position.y - desiredPose.position.y
+		print self.wrist1ToObj.position.z
+		print self.wrist1ToObj.position.y
+		'''
+		#print "quats"
+		#print quaternion
+
+		#print data.position.z
+		#print desiredPose.position.z
+
+		#print data.position.y
+		#print desiredPose.position.y
+
+		#print "z and y"
+		#print data.position.z - desiredPose.position.z
+		#print data.position.y - desiredPose.position.y
 
 		#print "y and x"
 		#print data.position.y
@@ -94,35 +104,59 @@ class ur5Controler(object):
 			onceFlag = True
 
 		goal_jointStates = self.group.get_current_joint_values()
-		angle_to_go_t = theta - goal_jointStates[0]
-		angle_to_go_p = phi - goal_jointStates[3]
+		#angle_to_go_t = theta - goal_jointStates[0]
+		#angle_to_go_p = phi - goal_jointStates[3]
 
 
+
+		'''print "actual:"
+		#print goal_jointStates[0]*180/pi
+		print goal_jointStates[3]*180/pi
+
+		#print "to go:"
+		#print angle_to_go_t*180/pi
+		#print angle_to_go_p*180/pi
+
+		print "goal"
+		#print theta*180/pi
+		print phi*180/pi
+		'''
+
+		#if phi < 0:
+		#	phi = pi+phi
+		#	print "phi < 0"
+		#	print phi*180/pi
+
+		print "move joint 1"
+		self.move_joint_to_target(0, theta)
+		print "move joint 4"
+
+		phi = math.atan2(self.wrist1ToObj.position.x, self.wrist1ToObj.position.z)
+		quaternion = tf.transformations.quaternion_from_euler(phi,0,0)
+
+		print "x, y, z"
+		print self.wrist1ToObj.position.x
+		print self.wrist1ToObj.position.y
+		print self.wrist1ToObj.position.z
 
 		print "actual:"
 		#print goal_jointStates[0]*180/pi
 		print goal_jointStates[3]*180/pi
 
-		print "to go:"
+		#print "to go:"
 		#print angle_to_go_t*180/pi
-		print angle_to_go_p*180/pi
+		#print angle_to_go_p*180/pi
 
 		print "goal"
 		#print theta*180/pi
 		print phi*180/pi
+		#phi = pi/2 - phi
+		#print phi*180/pi
 
-		print "vorschlag"
-		print (goal_jointStates[3] + phi)*180/pi
+		print "vorschlag zielstate"
+		print (goal_jointStates[3] - (pi/2 - phi))*180/pi
 
-		if phi < 0:
-			phi = pi+phi
-			print "phi < 0"
-			print phi*180/pi
-
-		#print "move joint 1"
-		#self.move_joint_to_target(0, theta)
-		print "move joint 4"
-		self.move_joint_to_target(3, goal_jointStates[3] + phi)
+		self.move_joint_to_target(3, goal_jointStates[3] - (pi/2 - phi))#goal_jointStates[3] + phi)
 
 		desiredPose = self.group.get_current_pose().pose
 
