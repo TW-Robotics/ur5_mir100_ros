@@ -29,8 +29,6 @@ from math import pi
 # Set True to make the program ask before the robot moves
 checkBeforeDo = True
 
-onceFlag = False
-
 # Class to control and move the ur5-robot
 class ur5Controler(object):
 	def __init__(self):
@@ -49,122 +47,34 @@ class ur5Controler(object):
 
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
-		rospy.Subscriber("/tf_objToBase", Pose, self.baseToObj_callback, queue_size=1)
-		rospy.Subscriber("/tf_objToCam", Point, self.wristToObj_callback, queue_size=1)
+		rospy.Subscriber("/tf_objToBase", Pose, self.baseToObj_callback, queue_size=1)	# get transformation from object to base for R1-Move
+		rospy.Subscriber("/tf_objToCam", Point, self.camToObj_callback, queue_size=1)	# get transformation from object to cam for R4-Move
+		self.camToObj = Point()
+		self.baseToObj = Pose()
 
-	def wristToObj_callback(self, data):
-		self.wrist1ToObj = data
+	def camToObj_callback(self, data):
+		self.camToObj = data
 
 	def baseToObj_callback(self, data):
-		global desiredPose
-		global onceFlag
-		desiredPose = Pose()
-		theta = math.atan2(data.position.y, data.position.x)
+		self.baseToObj = data
 
-		r = 0.4
-		h = 0.6
+	def followObject(self):
+		# drive to position where r = 0.4 and h = 0.6
+		jointStates = [-0.258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
+		self.execute_move(jointStates)
 
-		desiredPose.position.x = r*math.sin(theta)
-		desiredPose.position.y = r*math.cos(theta)
-		desiredPose.position.z = h
-
-		#phi = math.atan2((self.wrist1ToObj.position.z - desiredPose.position.z), (self.wrist1ToObj.position.y - desiredPose.position.y))
-		'''phi = math.atan2(self.wrist1ToObj.position.z, self.wrist1ToObj.position.y)
-		quaternion = tf.transformations.quaternion_from_euler(phi,0,0)
-
-		print "z and y"
-		print self.wrist1ToObj.position.z
-		print self.wrist1ToObj.position.y
-		'''
-		#print "quats"
-		#print quaternion
-
-		#print data.position.z
-		#print desiredPose.position.z
-
-		#print data.position.y
-		#print desiredPose.position.y
-
-		#print "z and y"
-		#print data.position.z - desiredPose.position.z
-		#print data.position.y - desiredPose.position.y
-
-		#print "y and x"
-		#print data.position.y
-		#print data.position.x
-
-		#print theta*180/pi
-		#print phi*180/pi
-		#print " "
-
-		if onceFlag == False:
-			# drive to position where r = 0.4 and h = 0.6
-			jointStates = [-0.258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
-			self.execute_move(jointStates)
-			onceFlag = True
-
-		goal_jointStates = self.group.get_current_joint_values()
-		#angle_to_go_t = theta - goal_jointStates[0]
-		#angle_to_go_p = phi - goal_jointStates[3]
-
-
-
-		'''print "actual:"
-		#print goal_jointStates[0]*180/pi
-		print goal_jointStates[3]*180/pi
-
-		#print "to go:"
-		#print angle_to_go_t*180/pi
-		#print angle_to_go_p*180/pi
-
-		print "goal"
-		#print theta*180/pi
-		print phi*180/pi
-		'''
-
-		#if phi < 0:
-		#	phi = pi+phi
-		#	print "phi < 0"
-		#	print phi*180/pi
-
-		print "move joint 1"
-		self.move_joint_to_target(0, theta)
-		print "move joint 4"
-
-		phi = math.atan2(self.wrist1ToObj.z, self.wrist1ToObj.y)
-		quaternion = tf.transformations.quaternion_from_euler(phi,0,0)
-
-		print "x, y, z"
-		print self.wrist1ToObj
-
-		print "actual:"
-		#print goal_jointStates[0]*180/pi
-		print goal_jointStates[3]*180/pi
-
-		#print "to go:"
-		#print angle_to_go_t*180/pi
-		#print angle_to_go_p*180/pi
-
-		print "goal"
-		#print theta*180/pi
-		print phi*180/pi
-		#phi = pi/2 - phi
-		print (pi/2-phi)*180/pi
-
-		print "vorschlag zielstate"
-		print (goal_jointStates[3] + (pi/2-phi))*180/pi
-
-		self.move_joint_to_target(3, goal_jointStates[3] + (pi/2-phi))#goal_jointStates[3] + phi)
-
-		desiredPose = self.group.get_current_pose().pose
-
-		desiredPose.orientation.x = quaternion[0]
-		desiredPose.orientation.y = quaternion[1]
-		desiredPose.orientation.z = quaternion[2]
-		desiredPose.orientation.w = quaternion[3]
-
-		#self.execute_move(desiredPose)
-		rospy.sleep(2)
+		while True:
+			print "move joint 1"
+			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
+			print "goal: " + str(theta*180/pi)
+			self.move_joint_to_target(0, theta)
+			
+			print "move joint 4"
+			act_jointStates = self.group.get_current_joint_values()
+			phi = math.atan2(self.camToObj.z, self.camToObj.y)
+			print "correction deg: " + str((pi/2-phi)*180/pi)
+			print "goal: " + str((act_jointStates[3] + (pi/2 - phi))*180/pi)
+			self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
 
 	# Publish the robot's trajectory
 	def display_trajectory(self, plan):
@@ -300,7 +210,9 @@ def main(args):
 		rospy.init_node('ur5-controler', anonymous=True)
 		ur5 = ur5Controler()
 
-		rospy.spin()
+		ur5.followObject()
+
+		#rospy.spin()
 
 		#while True:
 		#	ur5.execute_move(desiredPose)
