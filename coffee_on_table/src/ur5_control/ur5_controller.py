@@ -27,7 +27,7 @@ from math import pi
 # Class behind: http://docs.ros.org/kinetic/api/moveit_ros_planning_interface/html/classmoveit_1_1planning__interface_1_1MoveGroupInterface.html
 
 # Set True to make the program ask before the robot moves
-checkBeforeDo = False
+checkBeforeDo = True
 
 # Class to control and move the ur5-robot
 class ur5Controler(object):
@@ -35,8 +35,8 @@ class ur5Controler(object):
 		super(ur5Controler, self).__init__()
 
 		# Set Robot speed and acceloration [0, 1] (only 0.1 steps)
-		self.speed = 1
-		self.acceleration = 1
+		self.speed = 0.1
+		self.acceleration = 0.1
 		self.speedScalingFactor = 0.05		# for timing of path-planning-points [very small eg 0.01, 1]
 
 		# Init moveit_commander
@@ -60,31 +60,47 @@ class ur5Controler(object):
 
 	def moveToSearchPose(self):
 		# drive to position where r = 0.4 and h = 0.6
-		jointStates = [-0.258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
+		jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
+		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
 
 	def followObject(self):
-		#self.moveToSearchPose()
+		self.moveToSearchPose()
 		#rospy.sleep(5)
+
 		while True:
 			print "move joint 1"
+			act_jointStates = self.group.get_current_joint_values()
 			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
-			print "goal: " + str(theta*180/pi)
-			self.move_joint_to_target(0, theta)
-			
+			beta = math.atan2(self.camToObj.z, self.camToObj.x)
+			a = math.sqrt(self.baseToObj.position.y**2 + self.baseToObj.position.x**2)
+			b = math.sqrt(self.camToObj.z**2 + self.camToObj.x**2)
+			delta = math.asin(b/a * math.sin(pi/2 + beta))
+			print "correction deg: " + str(delta*180/pi)
+			print "goal: " + str((act_jointStates[0] - delta)*180/pi)
+			#self.move_joint_to_target(0, act_jointStates[0] - delta)
+
 			print "move joint 4"
 			act_jointStates = self.group.get_current_joint_values()
 			phi = math.atan2(self.camToObj.z, self.camToObj.y)
 			print "correction deg: " + str((pi/2-phi)*180/pi)
 			print "goal: " + str((act_jointStates[3] + (pi/2 - phi))*180/pi)
-			self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
+			#self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
 
 			# Move joints simulatenously
-			#goal_jointStates = act_jointStates
-			#goal_jointStates[0] = theta
-			#goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
-			#self.execute_move(goal_jointStates)
+			goal_jointStates = act_jointStates
+			goal_jointStates[0] = act_jointStates[0] - delta
+			goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
+			self.execute_move(goal_jointStates)
+
+			'''print "move joint 5"
+			act_jointStates = self.group.get_current_joint_values()
+			gamma = math.atan2(self.camToObj.z, self.camToObj.x)
+			print "correction deg: " + str((pi/2-gamma)*180/pi)
+			print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
+			self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
+			'''
 
 	def searchObject(self):
 		self.moveToSearchPose()
@@ -241,7 +257,7 @@ def main(args):
 		# Move to up-Position
 		'''print "Moving home"
 		ur5.go_home()
-
+		
 		# Move to pose
 		# Info: Get actual pose: rosrun tf tf_echo base_link tool0
 		print "Moving to pose"
