@@ -60,7 +60,8 @@ class ur5Controler(object):
 
 	def moveToSearchPose(self):
 		# drive to position where r = 0.4 and h = 0.6
-		jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
+		#jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
+		jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
 		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
@@ -94,6 +95,13 @@ class ur5Controler(object):
 			goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
 			self.execute_move(goal_jointStates)
 
+			distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
+			print "Distance to obj: " + str(distToObj)
+
+			if distToObj <= 0.8:
+				#print "Distance to obj: " + str(distToObj)
+				self.moveToObject()
+
 			'''print "move joint 5"
 			act_jointStates = self.group.get_current_joint_values()
 			gamma = math.atan2(self.camToObj.z, self.camToObj.x)
@@ -101,6 +109,20 @@ class ur5Controler(object):
 			print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
 			self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
 			'''
+
+	def moveToObject(self):
+		goal_pos = self.baseToObj 		# Stores pose of object relative to robot frame
+		current_pose = self.group.get_current_pose().pose
+		goal_pose = current_pose
+		goal_pose.orientation.x = 0.5
+		goal_pose.orientation.y = 0.5
+		goal_pose.orientation.z = -0.5
+		goal_pose.orientation.w = 0.5
+		goal_pose.position.x = goal_pos.position.x
+		goal_pose.position.y = goal_pos.position.y
+		goal_pose.position.z = goal_pos.position.z + 0.4
+
+		self.execute_move(goal_pose)
 
 	def searchObject(self):
 		self.moveToSearchPose()
