@@ -26,6 +26,7 @@ from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
 import sensor_msgs.point_cloud2 as pc2
 import ur5_control
+import math
 
 # for publishing coordinate frame
 import tf
@@ -42,6 +43,9 @@ class rossinator(object):
 	# Initialize class-variable to store bounding boxes
 	currentBoundingBoxes = BoundingBoxes()
 
+	center_img_x = 0
+	center_img_y = 0
+	obj_radius = 0
 	obj_center = Point()
 	is_approximation = True
 
@@ -94,7 +98,8 @@ class rossinator(object):
 			print(e)
 
 		# Check if there is a inner class in an outer class in the image and display message
-		#self.inner_in_outer()
+		# TODO COMMENT!!!!
+		self.inner_in_outer()
 		#if self.inner_in_outer():
 		#	a = 1#print('Found ' + self.innerClass + ' ' + self.strictness + ' ' + self.outerClass)
 		#else:
@@ -109,10 +114,111 @@ class rossinator(object):
 		try:
 			# Convert from ROS-Image to CV2::Mat
 			self.cv_depth_image = self.bridge.imgmsg_to_cv2(data,"32FC1")
+			#print self.cv_depth_image
 			# Convert from CV2::Mat to Array with depth-Values
 			self.depth_array = np.array(self.cv_depth_image, dtype=np.float32)
+			self.find_handle()
 		except CvBridgeError as e:
 			print(e)
+
+	def find_handle(self):
+		#Limit: 450
+		#print self.depth_array.max()
+		#print self.depth_array.min()
+		'''for i in range(0, len(self.cv_depth_image)):
+			for j in range(0, len(self.cv_depth_image[0])):
+				if self.cv_depth_image <= 450:
+					self.cv_depth_image = 255
+				else:
+					self.cv_depth_image = 0
+		'''
+		cv2.threshold(self.cv_depth_image, 300.0, 255, cv2.THRESH_BINARY, self.cv_depth_image)
+		#self.cv_depth_image_g = cv2.cvtColor(self.cv_depth_image, cv2.COLOR_BGR2GRAY)
+		self.cv_depth_image = np.uint8(self.cv_depth_image)
+		#cv2.imshow("CutOff", self.cv_depth_image)
+		#cv2.waitKey(1)
+#		self.cv_depth_image = cv2.imread('opencv_logo.png', 0)
+#		self.cv_depth_image = cv2.medianBlur(self.cv_depth_image,5)	
+
+		self.cv_depth_image = cv2.medianBlur(self.cv_depth_image, 5)
+		'''circles = cv2.HoughCircles(self.cv_depth_image,cv2.HOUGH_GRADIENT,1,30,
+                            param1=50,param2=30,minRadius=20,maxRadius=0)
+		circles = np.uint16(np.around(circles))
+		print circles
+		maxR = 0
+		biggestCircle = circles[0]
+		for i in circles[0,:]:
+			if i[2] > maxR:
+				biggestCircle = i
+
+		i = biggestCircle
+		'''
+		#self.cv_rgb_image = self.cv_depth_image
+		# draw the outer circle
+		cv2.circle(self.cv_rgb_image ,(self.center_img_x,self.center_img_y),self.obj_radius,(0,255,0),2)
+		# draw the center of the circle
+		cv2.circle(self.cv_rgb_image ,(self.center_img_x,self.center_img_y),2,(0,0,255),3)
+
+		start_y = int(self.center_img_x - 1.5*self.obj_radius)
+		start_x = int(self.center_img_y - 1.5*self.obj_radius)
+		end_y = int(self.center_img_x + 1.5*self.obj_radius)
+		end_x = int(self.center_img_y + 1.5*self.obj_radius)
+		if start_y < 0:
+			start_y = 0
+		if start_x < 0:
+			start_x = 0
+		if end_y >= len(self.cv_depth_image[1]):
+			print "y was " + str(end_y)
+			end_y = len(self.cv_depth_image[1])-1
+			print "y is now " + str(end_y)
+		if end_x >= len(self.cv_depth_image):
+			end_x = len(self.cv_depth_image)-1
+
+		#print len(self.cv_depth_image[0])
+		#print len(self.cv_depth_image[1]) --> 640
+		#print len(self.cv_depth_image) --> 480
+
+		biggestDist = 0.01
+		biggestDistPixel_x = 0
+		biggestDistPixel_y = 0
+		for x in range(start_x, end_x):
+			for y in range(start_y, end_y):
+				#print self.cv_depth_image[x][y]
+				if self.cv_depth_image[x][y] == 0:
+					dist = math.sqrt((self.center_img_x-y)**2 + (self.center_img_y-x)**2)
+					if dist > biggestDist:
+						biggestDist = dist
+						biggestDistPixel_x = y
+						biggestDistPixel_y = x
+
+		#print self.cv_depth_image[biggestDistPixel_x][biggestDistPixel_y]
+
+		cv2.circle(self.cv_rgb_image ,(start_y, start_x),2,(0,255,0),3)
+		cv2.circle(self.cv_rgb_image ,(start_y, end_x),2,(0,255,0),3)
+		cv2.circle(self.cv_rgb_image ,(end_y, start_x),2,(0,255,0),3)
+		cv2.circle(self.cv_rgb_image ,(end_y, end_x),2,(0,255,0),3)
+
+		cv2.circle(self.cv_rgb_image ,(biggestDistPixel_x, biggestDistPixel_y),2,(0,0,255),3)
+		#cv2.circle(self.cv_rgb_image ,(biggestDistPixel_x, biggestDistPixel_y),2,(255,0,255),3)
+
+		center_img = Point()
+		center_img.x = self.center_img_x
+		center_img.y = self.center_img_y
+		biggestDistPoint = Point()
+		biggestDistPoint.x = biggestDistPixel_x
+		biggestDistPoint.y = biggestDistPixel_y
+
+		cv2.line(self.cv_rgb_image, (self.center_img_x, self.center_img_y), (biggestDistPixel_x, biggestDistPixel_y), (150,150,0))
+
+		cv2.imshow("Circles", self.cv_rgb_image)
+		cv2.waitKey(1)
+		cv2.imshow("CutOff", self.cv_depth_image)
+		cv2.waitKey(1)
+
+		#cv2.destroyAllWindows()
+		#if len(circles == 1):
+		#	cv2.circle(self.cv_depth_image, circles[0], (0, 255, 0), 2)
+
 
 	def inner_in_outer(self):
 		foundInnerInOuter = False
@@ -132,7 +238,7 @@ class rossinator(object):
 
 						# Caluclate coordinates in mm (Center of image is zero)
 						if depth == 0:		# approximate if there is no depth-data
-							print "APPROXIMATION: "
+							#print "APPROXIMATION: "
 							self.is_approximation = True
 							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
 						self.is_approximation = False
@@ -144,7 +250,10 @@ class rossinator(object):
 						self.object_pos_pub.publish(obj_center_point)
 						#print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
 						self.obj_center = obj_center_point
-						
+						self.obj_radius = (inner_box.xmax-inner_box.xmin)/2
+						self.center_img_x = center_x
+						self.center_img_y = center_y
+
 						# Old + Debug
 						#else:
 							#print("Object is too far away. Come closer to get coordinates")
@@ -165,10 +274,10 @@ class rossinator(object):
 
 		# Display depth-array with drawn circle
 		windowName = "Depth image with circle"
-		cv2.namedWindow(windowName)
-		cv2.moveWindow(windowName, 800, 0)
-		cv2.imshow(windowName, self.cv_depth_image)
-		cv2.waitKey(1)
+		#cv2.namedWindow(windowName)
+		#cv2.moveWindow(windowName, 800, 0)
+		#cv2.imshow(windowName, self.cv_depth_image)
+		#cv2.waitKey(1)
 
 		# Return True if found, otherwise False
 		if foundInnerInOuter == True:
@@ -226,6 +335,8 @@ def main(args):
 	rospy.init_node('cupfinder', anonymous=True)
 	cupOnTable = rossinator()
 	print('Searching for ' + cupOnTable.innerClass + ' ' + cupOnTable.strictness + ' ' + cupOnTable.outerClass)
+
+	#cupOnTable.find_handle()
 
 	try:
 		rospy.spin()
