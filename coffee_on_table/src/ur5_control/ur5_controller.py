@@ -31,6 +31,9 @@ checkBeforeDo = True
 
 # Class to control and move the ur5-robot
 class ur5Controler(object):
+
+	distToObj = 1000
+
 	def __init__(self):
 		super(ur5Controler, self).__init__()
 
@@ -67,10 +70,10 @@ class ur5Controler(object):
 		self.execute_move(jointStates)
 
 	def followObject(self):
-		self.moveToSearchPose()
+		#self.moveToSearchPose()
 		#rospy.sleep(5)
 
-		while True:
+		#while True:
 			print "move joint 1"
 			act_jointStates = self.group.get_current_joint_values()
 			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
@@ -95,12 +98,12 @@ class ur5Controler(object):
 			goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
 			self.execute_move(goal_jointStates)
 
-			distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
-			print "Distance to obj: " + str(distToObj)
+			self.distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
+			print "Distance to obj: " + str(self.distToObj)
 
-			if distToObj <= 0.8:
-				#print "Distance to obj: " + str(distToObj)
-				self.moveToObject()
+			#if self.distToObj <= 0.8:
+				#print "Distance to obj: " + str(self.distToObj)
+			#	self.moveToObject()
 
 			'''print "move joint 5"
 			act_jointStates = self.group.get_current_joint_values()
@@ -125,8 +128,7 @@ class ur5Controler(object):
 		self.execute_move(goal_pose)
 
 	def searchObject(self):
-		self.moveToSearchPose()
-		while self.camToObj.x == 0 and self.camToObj.y == 0 and self.camToObj.z == 0:
+		#while self.camToObj.x == 0 and self.camToObj.y == 0 and self.camToObj.z == 0:
 			#print self.camToObj
 			self.move_joint(0, 10)
 
@@ -266,6 +268,7 @@ def main(args):
 		rospy.init_node('ur5-controler', anonymous=True)
 		ur5 = ur5Controler()
 
+		ur5.moveToSearchPose()
 		ur5.searchObject()
 		ur5.followObject()
 

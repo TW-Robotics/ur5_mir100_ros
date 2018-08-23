@@ -25,6 +25,7 @@ from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
 import sensor_msgs.point_cloud2 as pc2
+import ur5_control
 
 # for publishing coordinate frame
 import tf
@@ -35,11 +36,14 @@ import tf
 		- Kamera-Image where the depth-image is aligned to the color-image
 		- Kamera-Calibration data
 	Calculates the position of the center of the innerClass in the outerClass(e.g. center of cup on table)'''
-class rossinator:
+class rossinator(object):
 	# Initialize CVBridge
 	bridge = CvBridge()
 	# Initialize class-variable to store bounding boxes
 	currentBoundingBoxes = BoundingBoxes()
+
+	obj_center = Point()
+	is_approximation = True
 
 	onlyOneClass = False
 	innerClass = ""
@@ -50,11 +54,14 @@ class rossinator:
 		# Get and validate arguments
 		if len(sys.argv) == 2:
 			self.onlyOneClass = True
+			self.innerClass = sys.argv[1]
 		elif len(sys.argv) < 3:
 			print("  ERROR: Too few arguments given!")
-			return
-		self.innerClass = sys.argv[1]
+			self.onlyOneClass = True
+			self.innerClass = "cup"
+			#return
 		if self.onlyOneClass == False:
+			self.innerClass = sys.argv[1]
 			self.outerClass = sys.argv[2]
 			self.strictness = sys.argv[3]
 
@@ -87,10 +94,11 @@ class rossinator:
 			print(e)
 
 		# Check if there is a inner class in an outer class in the image and display message
-		if self.inner_in_outer():
-			a = 1#print('Found ' + self.innerClass + ' ' + self.strictness + ' ' + self.outerClass)
-
-
+		#self.inner_in_outer()
+		#if self.inner_in_outer():
+		#	a = 1#print('Found ' + self.innerClass + ' ' + self.strictness + ' ' + self.outerClass)
+		#else:
+			#ur5_control.searchObject()
 
 	# Write bounding boxes to class-variable
 	def bounding_callback(self, data):
@@ -125,14 +133,17 @@ class rossinator:
 						# Caluclate coordinates in mm (Center of image is zero)
 						if depth == 0:		# approximate if there is no depth-data
 							print "APPROXIMATION: "
+							self.is_approximation = True
 							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
+						self.is_approximation = False
 						[x, y, z] = self.calculate_center_coordinates(center_x, center_y, depth)
 						obj_center_point = Point()
 						obj_center_point.x = x / 1000
 						obj_center_point.y = y / 1000
 						obj_center_point.z = z / 1000
 						self.object_pos_pub.publish(obj_center_point)
-						print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
+						#print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
+						self.obj_center = obj_center_point
 						
 						# Old + Debug
 						#else:
