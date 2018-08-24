@@ -12,7 +12,7 @@ def main(args):
 	#while True:
 	#	print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(imgProc.obj_center.x*1000, imgProc.obj_center.y*1000, imgProc.obj_center.z*1000)
 
-	ur5.moveToSearchPose()
+	'''ur5.moveToSearchPose()
 	print imgProc.inner_in_outer()
 	while imgProc.inner_in_outer() == False:
 		print "Searching"
@@ -24,8 +24,16 @@ def main(args):
 		print "Found Cup... Following"
 		ur5.followObject()
 	print "Driving to Cup"
+	'''
 	ur5.moveToObject()
+	
 	print "Analyse depth-image"
+	while imgProc.find_handle() == False:
+		print "search"
+		rospy.rostime.wallsleep(0.5)
+		imgProc.inner_in_outer()
+		imgProc.find_handle()
+	print "Found grapping Position"
 
 	try:
 		rospy.spin()

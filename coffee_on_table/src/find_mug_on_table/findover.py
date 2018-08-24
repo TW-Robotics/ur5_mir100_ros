@@ -99,7 +99,7 @@ class rossinator(object):
 
 		# Check if there is a inner class in an outer class in the image and display message
 		# TODO COMMENT!!!!
-		self.inner_in_outer()
+		#self.inner_in_outer()
 		#if self.inner_in_outer():
 		#	a = 1#print('Found ' + self.innerClass + ' ' + self.strictness + ' ' + self.outerClass)
 		#else:
@@ -117,7 +117,7 @@ class rossinator(object):
 			#print self.cv_depth_image
 			# Convert from CV2::Mat to Array with depth-Values
 			self.depth_array = np.array(self.cv_depth_image, dtype=np.float32)
-			self.find_handle()
+			#self.find_handle()
 		except CvBridgeError as e:
 			print(e)
 
@@ -132,6 +132,9 @@ class rossinator(object):
 				else:
 					self.cv_depth_image = 0
 		'''
+		#if 'self.cv_depth_image' not in locals():
+		#	print "noIMG"
+		#	return False
 		cv2.threshold(self.cv_depth_image, 300.0, 255, cv2.THRESH_BINARY, self.cv_depth_image)
 		#self.cv_depth_image_g = cv2.cvtColor(self.cv_depth_image, cv2.COLOR_BGR2GRAY)
 		self.cv_depth_image = np.uint8(self.cv_depth_image)
@@ -201,19 +204,48 @@ class rossinator(object):
 		cv2.circle(self.cv_rgb_image ,(biggestDistPixel_x, biggestDistPixel_y),2,(0,0,255),3)
 		#cv2.circle(self.cv_rgb_image ,(biggestDistPixel_x, biggestDistPixel_y),2,(255,0,255),3)
 
-		center_img = Point()
-		center_img.x = self.center_img_x
-		center_img.y = self.center_img_y
-		biggestDistPoint = Point()
-		biggestDistPoint.x = biggestDistPixel_x
-		biggestDistPoint.y = biggestDistPixel_y
-
 		cv2.line(self.cv_rgb_image, (self.center_img_x, self.center_img_y), (biggestDistPixel_x, biggestDistPixel_y), (150,150,0))
+
+		coc = Point()
+		coc.x = self.center_img_x
+		coc.y = self.center_img_y
+		poi = Point()
+		poi.x = biggestDistPixel_x
+		poi.y = biggestDistPixel_y
+
+		grapPoint = Point()
+		if (poi.x != 0):
+			v = Point()
+			v.x = coc.x - poi.x
+			v.y = coc.y - poi.y
+			lv = math.sqrt((coc.x - poi.x)**2 + (coc.y - poi.y)**2)
+			nv = Point()
+			nv.x = v.x / lv
+			nv.y = v.y / lv
+
+			grapPoint.x = int(poi.x + nv.x * (lv-self.obj_radius)/2)
+			grapPoint.y = int(poi.y + nv.y * (lv-self.obj_radius)/2)
+			#while grapPoint.z == 0:
+			#	self.find_handle()
+			grapPoint.z = self.depth_array[grapPoint.x, grapPoint.y]
+			#	rospy.sleep(1)
+			print grapPoint
+
+			cv2.circle(self.cv_rgb_image ,(grapPoint.x, grapPoint.y),2,(0,150,150),3)
 
 		cv2.imshow("Circles", self.cv_rgb_image)
 		cv2.waitKey(1)
 		cv2.imshow("CutOff", self.cv_depth_image)
 		cv2.waitKey(1)
+
+		if grapPoint.z != 0:
+			[x, y, z] = self.calculate_center_coordinates(grapPoint.x, grapPoint.y, grapPoint.z)
+			grapPoint.x = x / 1000
+			grapPoint.y = y / 1000
+			grapPoint.z = z / 1000
+			self.object_pos_pub.publish(grapPoint)
+			return True
+		return False
 
 		#cv2.destroyAllWindows()
 		#if len(circles == 1):
