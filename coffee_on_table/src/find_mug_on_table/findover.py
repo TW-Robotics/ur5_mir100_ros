@@ -27,6 +27,7 @@ from geometry_msgs.msg import Point
 import sensor_msgs.point_cloud2 as pc2
 import ur5_control
 import math
+from math import pi
 
 # for publishing coordinate frame
 import tf
@@ -212,6 +213,7 @@ class rossinator(object):
 		poi = Point()
 		poi.x = biggestDistPixel_x
 		poi.y = biggestDistPixel_y
+		alpha = 10	# Init as invalid
 
 		grapPoint = Point()
 		if (poi.x != 0):
@@ -230,6 +232,20 @@ class rossinator(object):
 			grapPoint.z = self.depth_array[grapPoint.x, grapPoint.y]
 			#	rospy.sleep(1)
 			print grapPoint
+
+			# Calculation of angle to axes
+			x_axes = Point()
+			x_axes.x = 1
+			x_axes.y = 0
+
+			dotProduct = v.x*x_axes.x + v.y*x_axes.y
+			lx_axes = 1
+			alpha = math.acos(dotProduct/(lv*lx_axes))
+			# Detect if angle is positive or negative
+			if poi.y > coc.y:
+				alpha = -alpha
+			print alpha*180/pi
+			# TODO Calculate angle in case it is bigger than 90 deg
 
 			cv2.circle(self.cv_rgb_image ,(grapPoint.x, grapPoint.y),2,(0,150,150),3)
 
