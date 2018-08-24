@@ -44,10 +44,8 @@ class rossinator(object):
 	# Initialize class-variable to store bounding boxes
 	currentBoundingBoxes = BoundingBoxes()
 
-	center_img_x = 0
-	center_img_y = 0
+	coc = Point() 	# Center of cup in image coordinates (px)
 	obj_radius = 0
-	obj_center = Point()
 	is_approximation = True
 
 	onlyOneClass = False
@@ -81,6 +79,18 @@ class rossinator(object):
 
 		#self.cup_size_middler = 0
 		#self.cup_size_middler_count = 0
+
+	# Publish Pose of object
+	def pub_object_pose(self, xyz, rxyzw):
+		pubPose = Pose()
+		pubPose.position.x = xyz.x / 1000
+		pubPose.position.y = xyz.y / 1000
+		pubPose.position.z = xyz.z / 1000
+		pubPose.orientation.x = rxyzw[0]
+		pubPose.orientation.y = rxyzw[1]
+		pubPose.orientation.z = rxyzw[2]
+		pubPose.orientation.w = rxyzw[3]
+		self.object_pos_pub.publish(pubPose)
 
 	# Get the pose of the camera dependent on the robot pose
 	def camPose_callback(self, data):
@@ -122,29 +132,17 @@ class rossinator(object):
 		except CvBridgeError as e:
 			print(e)
 
-	def find_handle(self):
-		#Limit: 450
-		#print self.depth_array.max()
-		#print self.depth_array.min()
-		'''for i in range(0, len(self.cv_depth_image)):
-			for j in range(0, len(self.cv_depth_image[0])):
-				if self.cv_depth_image <= 450:
-					self.cv_depth_image = 255
-				else:
-					self.cv_depth_image = 0
-		'''
-		#if 'self.cv_depth_image' not in locals():
-		#	print "noIMG"
-		#	return False
-		cv2.threshold(self.cv_depth_image, 300.0, 255, cv2.THRESH_BINARY, self.cv_depth_image)
-		#self.cv_depth_image_g = cv2.cvtColor(self.cv_depth_image, cv2.COLOR_BGR2GRAY)
+	# Calculate and publish pose where to grab the cup
+	def find_handle(self, threshold):
+		# Set all pixels to 255, which are farer away then "threshold" (depends on robot pre-position)
+		# TODO: Write function which calculates best threshold by it's own with percent of white/black pixels 
+		cv2.threshold(self.cv_depth_image, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image)
+		# Convert the image to uint8 to make it processible with other functions
 		self.cv_depth_image = np.uint8(self.cv_depth_image)
-		#cv2.imshow("CutOff", self.cv_depth_image)
-		#cv2.waitKey(1)
-#		self.cv_depth_image = cv2.imread('opencv_logo.png', 0)
-#		self.cv_depth_image = cv2.medianBlur(self.cv_depth_image,5)	
-
+		# Blur the image to lose small regions which could be detected wrong
 		self.cv_depth_image = cv2.medianBlur(self.cv_depth_image, 5)
+		
+		# Find circles - currently not used
 		'''circles = cv2.HoughCircles(self.cv_depth_image,cv2.HOUGH_GRADIENT,1,30,
                             param1=50,param2=30,minRadius=20,maxRadius=0)
 		circles = np.uint16(np.around(circles))
@@ -157,125 +155,111 @@ class rossinator(object):
 
 		i = biggestCircle
 		'''
-		#self.cv_rgb_image = self.cv_depth_image
-		# draw the outer circle
-		cv2.circle(self.cv_rgb_image ,(self.center_img_x,self.center_img_y),self.obj_radius,(0,255,0),2)
-		# draw the center of the circle
-		cv2.circle(self.cv_rgb_image ,(self.center_img_x,self.center_img_y),2,(0,0,255),3)
 
-		start_y = int(self.center_img_x - 1.5*self.obj_radius)
-		start_x = int(self.center_img_y - 1.5*self.obj_radius)
-		end_y = int(self.center_img_x + 1.5*self.obj_radius)
-		end_x = int(self.center_img_y + 1.5*self.obj_radius)
+		# Calculate the area, where around the center of the cup, where should be searched for the handle
+		# TODO: Don't search in area of the cup center
+		sizeFactor = 1.5 
+		start_y = int(self.coc.x - sizeFactor*self.obj_radius)
+		start_x = int(self.coc.y - sizeFactor*self.obj_radius)
+		end_y = int(self.coc.x + sizeFactor*self.obj_radius)
+		end_x = int(self.coc.y + sizeFactor*self.obj_radius)
 		if start_y < 0:
 			start_y = 0
 		if start_x < 0:
 			start_x = 0
 		if end_y >= len(self.cv_depth_image[1]):
-			print "y was " + str(end_y)
 			end_y = len(self.cv_depth_image[1])-1
-			print "y is now " + str(end_y)
 		if end_x >= len(self.cv_depth_image):
 			end_x = len(self.cv_depth_image)-1
 
-		#print len(self.cv_depth_image[0])
-		#print len(self.cv_depth_image[1]) --> 640
-		#print len(self.cv_depth_image) --> 480
-
-		biggestDist = 0.01
-		biggestDistPixel_x = 0
-		biggestDistPixel_y = 0
+		# Calculate the distance of every pixel which is black to the center of the cup
+		# TODO optimize function to be quicker
+		biggestDist = 0.0
+		biggestDistPos_px = Point()
 		for x in range(start_x, end_x):
 			for y in range(start_y, end_y):
-				#print self.cv_depth_image[x][y]
 				if self.cv_depth_image[x][y] == 0:
-					dist = math.sqrt((self.center_img_x-y)**2 + (self.center_img_y-x)**2)
+					dist = math.sqrt((self.coc.x-y)**2 + (self.coc.y-x)**2)
 					if dist > biggestDist:
 						biggestDist = dist
-						biggestDistPixel_x = y
-						biggestDistPixel_y = x
+						biggestDistPos_px.x = y
+						biggestDistPos_px.y = x
+		# Store Point of Interest
+		poi = biggestDistPos_px
 
-		#print self.cv_depth_image[biggestDistPixel_x][biggestDistPixel_y]
+		# Calculate grab-point and grab-pose
+		grabPoint = Point()
+		if poi.x != 0:		# if a poi has been found
+			# Vector from poi to coc
+			v = Point()
+			v.x = self.coc.x - poi.x
+			v.y = self.coc.y - poi.y
+			# Length of vector v
+			lv = math.sqrt((self.coc.x - poi.x)**2 + (self.coc.y - poi.y)**2)
+			# Resize vector to unit vector
+			v.x = v.x / lv
+			v.y = v.y / lv
 
+			# Grab-Point is in the middle of the poi and where v intersects with the radius
+			grabPoint.x = int(poi.x + v.x * (lv-self.obj_radius)/2)
+			grabPoint.y = int(poi.y + v.y * (lv-self.obj_radius)/2)
+			grabPoint.z = self.depth_array[grabPoint.x, grabPoint.y]
+			# print grabPoint
+
+			# Calculation of angle alpha of vecotr v to axis
+			# Make a vector along the x-axis
+			x_axis = Point()
+			x_axis.x = 1
+			x_axis.y = 0
+			lx_axis = 1
+			dotProduct = v.x*x_axis.x + v.y*x_axis.y
+			alpha = math.acos(dotProduct/(lv*lx_axis))
+
+			# Detect if angle is positive or negative
+			if poi.y > self.coc.y:
+				alpha = -alpha
+			# TODO Calculate angle in case it is bigger than 90 deg (grabable?)
+			#print alpha*180/pi
+
+			quats = tf.transformations.quaternion_from_euler(alpha, -pi/2, pi/2, 'rzyx')
+			#quats = tf.transformations.quaternion_from_euler(0, -pi/2, pi/2+alpha, 'rzyx')
+			#quats = tf.transformations.quaternion_from_euler(pi/2, alpha, 0, 'rxyz')
+			#print quats
+
+			# Draw grab-point
+			cv2.circle(self.cv_rgb_image ,(grabPoint.x, grabPoint.y),2,(0,150,150),3)
+
+		# Draw circle for border of cup
+		cv2.circle(self.cv_rgb_image ,(self.coc.x,self.coc.y),self.obj_radius,(0,255,0),2)
+		# Draw circle for center of cup
+		cv2.circle(self.cv_rgb_image ,(self.coc.x,self.coc.y),2,(0,0,255),3)
+
+		# Draw circles and lines for area of interest
 		cv2.circle(self.cv_rgb_image ,(start_y, start_x),2,(0,255,0),3)
 		cv2.circle(self.cv_rgb_image ,(start_y, end_x),2,(0,255,0),3)
 		cv2.circle(self.cv_rgb_image ,(end_y, start_x),2,(0,255,0),3)
 		cv2.circle(self.cv_rgb_image ,(end_y, end_x),2,(0,255,0),3)
+		cv2.line(self.cv_rgb_image, (start_y, start_x), (end_y, start_x), (150,150,0))
+		cv2.line(self.cv_rgb_image, (start_y, start_x), (start_y, end_x), (150,150,0))
+		cv2.line(self.cv_rgb_image, (end_y, end_x), (start_y, end_x), (150,150,0))
+		cv2.line(self.cv_rgb_image, (end_y, end_x), (end_y, start_x), (150,150,0))
 
-		cv2.circle(self.cv_rgb_image ,(biggestDistPixel_x, biggestDistPixel_y),2,(0,0,255),3)
-		#cv2.circle(self.cv_rgb_image ,(biggestDistPixel_x, biggestDistPixel_y),2,(255,0,255),3)
+		# Draw circle for point of interest
+		cv2.circle(self.cv_rgb_image ,(poi.x, poi.y),2,(0,0,255),3)
+		# Draw line from poi to center of cup
+		cv2.line(self.cv_rgb_image, (self.coc.x, self.coc.y), (poi.x, poi.y), (150,150,0))
 
-		cv2.line(self.cv_rgb_image, (self.center_img_x, self.center_img_y), (biggestDistPixel_x, biggestDistPixel_y), (150,150,0))
-
-		coc = Point()
-		coc.x = self.center_img_x
-		coc.y = self.center_img_y
-		poi = Point()
-		poi.x = biggestDistPixel_x
-		poi.y = biggestDistPixel_y
-		alpha = 10	# Init as invalid
-
-		grapPoint = Point()
-		if (poi.x != 0):
-			v = Point()
-			v.x = coc.x - poi.x
-			v.y = coc.y - poi.y
-			lv = math.sqrt((coc.x - poi.x)**2 + (coc.y - poi.y)**2)
-			nv = Point()
-			nv.x = v.x / lv
-			nv.y = v.y / lv
-
-			grapPoint.x = int(poi.x + nv.x * (lv-self.obj_radius)/2)
-			grapPoint.y = int(poi.y + nv.y * (lv-self.obj_radius)/2)
-			#while grapPoint.z == 0:
-			#	self.find_handle()
-			grapPoint.z = self.depth_array[grapPoint.x, grapPoint.y]
-			#	rospy.sleep(1)
-			print grapPoint
-
-			# Calculation of angle to axes
-			x_axes = Point()
-			x_axes.x = 1
-			x_axes.y = 0
-
-			dotProduct = v.x*x_axes.x + v.y*x_axes.y
-			lx_axes = 1
-			alpha = math.acos(dotProduct/(lv*lx_axes))
-			# Detect if angle is positive or negative
-			if poi.y > coc.y:
-				alpha = -alpha
-			print alpha*180/pi
-			#quats = tf.transformations.quaternion_from_euler(0, 0, alpha, 'rxyz')	#tool0
-			#quats = tf.transformations.quaternion_from_euler(0, -pi/2, pi/2+alpha, 'rzyx')
-			quats = tf.transformations.quaternion_from_euler(alpha, -pi/2, pi/2, 'rzyx')
-			#quats = tf.transformations.quaternion_from_euler(pi/2, alpha, 0, 'rxyz')
-			print quats
-			# TODO Calculate angle in case it is bigger than 90 deg
-
-			cv2.circle(self.cv_rgb_image ,(grapPoint.x, grapPoint.y),2,(0,150,150),3)
-
+		# Display the images
 		cv2.imshow("Circles", self.cv_rgb_image)
 		cv2.waitKey(1)
 		cv2.imshow("CutOff", self.cv_depth_image)
 		cv2.waitKey(1)
 
-		if grapPoint.z != 0:
-			[x, y, z] = self.calculate_center_coordinates(grapPoint.x, grapPoint.y, grapPoint.z)
-			grapPose = Pose()
-			grapPose.position.x = x / 1000
-			grapPose.position.y = y / 1000
-			grapPose.position.z = z / 1000
-			grapPose.orientation.x = quats[0]
-			grapPose.orientation.y = quats[1]
-			grapPose.orientation.z = quats[2]
-			grapPose.orientation.w = quats[3]
-			self.object_pos_pub.publish(grapPose)
+		if grabPoint.z != 0:
+			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
+			self.pub_object_pose(grabPoint, quats)
 			return True
 		return False
-
-		#cv2.destroyAllWindows()
-		#if len(circles == 1):
-		#	cv2.circle(self.cv_depth_image, circles[0], (0, 255, 0), 2)
 
 
 	def inner_in_outer(self):
@@ -300,21 +284,13 @@ class rossinator(object):
 							self.is_approximation = True
 							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
 						self.is_approximation = False
-						[x, y, z] = self.calculate_center_coordinates(center_x, center_y, depth)
-						obj_center_pose = Pose()
-						obj_center_pose.position.x = x / 1000
-						obj_center_pose.position.y = y / 1000
-						obj_center_pose.position.z = z / 1000
-						obj_center_pose.orientation.x = 0
-						obj_center_pose.orientation.y = 0
-						obj_center_pose.orientation.z = 0
-						obj_center_pose.orientation.w = 1
-						self.object_pos_pub.publish(obj_center_pose)
+						obj_center_pos = self.calculate_center_coordinates(center_x, center_y, depth)
+						self.pub_object_pose(obj_center_pos, [0, 0, 0, 1])
+
 						#print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
-						self.obj_center = obj_center_pose.position
 						self.obj_radius = (inner_box.xmax-inner_box.xmin)/2
-						self.center_img_x = center_x
-						self.center_img_y = center_y
+						self.coc.x = center_x
+						self.coc.y = center_y
 
 						# Old + Debug
 						#else:
@@ -356,7 +332,11 @@ class rossinator(object):
 		data = self.camInfo
 		K = [[data.K[0], data.K[1], data.K[2]], [data.K[3], data.K[4], data.K[5]], [data.K[6], data.K[7], data.K[8]]]
 		[x, y, z] = np.dot(np.linalg.inv(K), [center_x*z, center_y*z, z])
-		return [x, y, z]
+		center_point = Point()
+		center_point.x = x
+		center_point.y = y
+		center_point.z = z
+		return center_point
 
 	# Return True if inner box is in outer box (accroding to strictness), otherwise False
 	def box_is_in_box(self, outer_box, inner_box):

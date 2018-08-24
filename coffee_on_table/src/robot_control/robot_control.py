@@ -28,13 +28,12 @@ def main(args):
 	ur5.moveToObject()
 	
 	print "Analyse depth-image"
-	while imgProc.find_handle() == False:
-#	while True:
+	while imgProc.find_handle(300) == False:
 		print "search"
 		rospy.rostime.wallsleep(0.5)
 		imgProc.inner_in_outer()
 		inp = raw_input("search handle? y/n: ")[0]
-		imgProc.find_handle()
+		imgProc.find_handle(300)
 		#inp = raw_input("Move robot? y/n: ")[0]
 	print "Found grapping Position"
 	rospy.rostime.wallsleep(0.5)	# needed to get actual position
