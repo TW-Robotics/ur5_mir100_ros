@@ -72,7 +72,7 @@ class rossinator(object):
 
 		# Initialize Publisher and Subscribers
 		self.mypub = rospy.Publisher("/roi", CompressedImage, queue_size=1)	#TODO Not used yet
-		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Point, queue_size=1)	# Publish xyz-Position of object
+		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Pose, queue_size=1)	# Publish xyz-Position of object
 		rospy.Subscriber("/camera/color/image_raw_rotated", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
 		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
 		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
@@ -245,6 +245,11 @@ class rossinator(object):
 			if poi.y > coc.y:
 				alpha = -alpha
 			print alpha*180/pi
+			#quats = tf.transformations.quaternion_from_euler(0, 0, alpha, 'rxyz')	#tool0
+			#quats = tf.transformations.quaternion_from_euler(0, -pi/2, pi/2+alpha, 'rzyx')
+			quats = tf.transformations.quaternion_from_euler(alpha, -pi/2, pi/2, 'rzyx')
+			#quats = tf.transformations.quaternion_from_euler(pi/2, alpha, 0, 'rxyz')
+			print quats
 			# TODO Calculate angle in case it is bigger than 90 deg
 
 			cv2.circle(self.cv_rgb_image ,(grapPoint.x, grapPoint.y),2,(0,150,150),3)
@@ -256,10 +261,15 @@ class rossinator(object):
 
 		if grapPoint.z != 0:
 			[x, y, z] = self.calculate_center_coordinates(grapPoint.x, grapPoint.y, grapPoint.z)
-			grapPoint.x = x / 1000
-			grapPoint.y = y / 1000
-			grapPoint.z = z / 1000
-			self.object_pos_pub.publish(grapPoint)
+			grapPose = Pose()
+			grapPose.position.x = x / 1000
+			grapPose.position.y = y / 1000
+			grapPose.position.z = z / 1000
+			grapPose.orientation.x = quats[0]
+			grapPose.orientation.y = quats[1]
+			grapPose.orientation.z = quats[2]
+			grapPose.orientation.w = quats[3]
+			self.object_pos_pub.publish(grapPose)
 			return True
 		return False
 
@@ -291,13 +301,17 @@ class rossinator(object):
 							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
 						self.is_approximation = False
 						[x, y, z] = self.calculate_center_coordinates(center_x, center_y, depth)
-						obj_center_point = Point()
-						obj_center_point.x = x / 1000
-						obj_center_point.y = y / 1000
-						obj_center_point.z = z / 1000
-						self.object_pos_pub.publish(obj_center_point)
+						obj_center_pose = Pose()
+						obj_center_pose.position.x = x / 1000
+						obj_center_pose.position.y = y / 1000
+						obj_center_pose.position.z = z / 1000
+						obj_center_pose.orientation.x = 0
+						obj_center_pose.orientation.y = 0
+						obj_center_pose.orientation.z = 0
+						obj_center_pose.orientation.w = 1
+						self.object_pos_pub.publish(obj_center_pose)
 						#print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
-						self.obj_center = obj_center_point
+						self.obj_center = obj_center_pose.position
 						self.obj_radius = (inner_box.xmax-inner_box.xmin)/2
 						self.center_img_x = center_x
 						self.center_img_y = center_y

@@ -51,8 +51,8 @@ class ur5Controler(object):
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 		rospy.Subscriber("/tf_objToBase", Pose, self.baseToObj_callback, queue_size=1)	# get transformation from object to base for R1-Move
-		rospy.Subscriber("/tf_objToCam", Point, self.camToObj_callback, queue_size=1)	# get transformation from object to cam for R4-Move
-		self.camToObj = Point()
+		rospy.Subscriber("/tf_objToCam", Pose, self.camToObj_callback, queue_size=1)	# get transformation from object to cam for R4-Move
+		self.camToObj = Pose()
 		self.baseToObj = Pose()
 
 	def camToObj_callback(self, data):
@@ -77,9 +77,9 @@ class ur5Controler(object):
 			print "move joint 1"
 			act_jointStates = self.group.get_current_joint_values()
 			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
-			beta = math.atan2(self.camToObj.z, self.camToObj.x)
+			beta = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
 			a = math.sqrt(self.baseToObj.position.y**2 + self.baseToObj.position.x**2)
-			b = math.sqrt(self.camToObj.z**2 + self.camToObj.x**2)
+			b = math.sqrt(self.camToObj.position.z**2 + self.camToObj.position.x**2)
 			delta = math.asin(b/a * math.sin(pi/2 + beta))
 			print "correction deg: " + str(delta*180/pi)
 			print "goal: " + str((act_jointStates[0] - delta)*180/pi)
@@ -87,7 +87,7 @@ class ur5Controler(object):
 
 			print "move joint 4"
 			act_jointStates = self.group.get_current_joint_values()
-			phi = math.atan2(self.camToObj.z, self.camToObj.y)
+			phi = math.atan2(self.camToObj.position.z, self.camToObj.position.y)
 			print "correction deg: " + str((pi/2-phi)*180/pi)
 			print "goal: " + str((act_jointStates[3] + (pi/2 - phi))*180/pi)
 			#self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
@@ -107,28 +107,32 @@ class ur5Controler(object):
 
 			'''print "move joint 5"
 			act_jointStates = self.group.get_current_joint_values()
-			gamma = math.atan2(self.camToObj.z, self.camToObj.x)
+			gamma = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
 			print "correction deg: " + str((pi/2-gamma)*180/pi)
 			print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
 			self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
 			'''
 
 	def moveToObject(self):
-		goal_pos = self.baseToObj 		# Stores pose of object relative to robot frame
+		goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
 		current_pose = self.group.get_current_pose().pose
 		goal_pose = current_pose
 		goal_pose.orientation.x = 0.5
 		goal_pose.orientation.y = 0.5
 		goal_pose.orientation.z = -0.5
 		goal_pose.orientation.w = 0.5
-		goal_pose.position.x = goal_pos.position.x
-		goal_pose.position.y = goal_pos.position.y
-		goal_pose.position.z = goal_pos.position.z + 0.4
+		#goal_pose.position.x = goal_pos.position.x
+		#goal_pose.position.y = goal_pos.position.y
+		goal_pose.position.z = goal_pose.position.z + 0.4
 
 		self.execute_move(goal_pose)
 
+	def moveToGrappingPose(self):
+		goal_pose = self.baseToObj
+		self.execute_move(goal_pose)
+
 	def searchObject(self):
-		#while self.camToObj.x == 0 and self.camToObj.y == 0 and self.camToObj.z == 0:
+		#while self.camToObj.position.x == 0 and self.camToObj.position.y == 0 and self.camToObj.position.z == 0:
 			#print self.camToObj
 			self.move_joint(0, 10)
 
