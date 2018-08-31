@@ -25,6 +25,9 @@ from math import pi
 
 # Source: http://docs.ros.org/kinetic/api/moveit_commander/html/move__group_8py_source.html
 # Class behind: http://docs.ros.org/kinetic/api/moveit_ros_planning_interface/html/classmoveit_1_1planning__interface_1_1MoveGroupInterface.html
+# Planning Scene: http://docs.ros.org/kinetic/api/moveit_commander/html/classmoveit__commander_1_1planning__scene__interface_1_1PlanningSceneInterface.html#a8c646437964759c78591394867b6c2b9
+# In order to make the mesh-importer working: https://launchpadlibrarian.net/319496602/patchPyassim.txt
+#		open /usr/lib/python2.7/dist-packages/pyassimp/core.py and change line 33 according to the link to "load, release, dll = helper.search_library()"
 
 # Set True to make the program ask before the robot moves
 checkBeforeDo = True
@@ -47,6 +50,7 @@ class ur5Controler(object):
 		self.robot = moveit_commander.RobotCommander()
 		group_name = "manipulator"
 		self.group = moveit_commander.MoveGroupCommander(group_name)
+		self.scene = moveit_commander.PlanningSceneInterface()
 
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
@@ -61,8 +65,23 @@ class ur5Controler(object):
 	def baseToObj_callback(self, data):
 		self.baseToObj = data
 
-	def refresh(self):
-		return self.baseToObj
+	def addObject(self):
+		rospy.sleep(2)
+		box_pose = geometry_msgs.msg.PoseStamped()
+		box_pose.header.frame_id = self.robot.get_planning_frame()
+		box_pose.pose.orientation.w = 1.0
+		box_pose.pose.position.x = -0.2
+		box_pose.pose.position.y = 0
+		box_pose.pose.position.z = -0.3
+		box_name = "MIR"
+		box_pose.pose = self.group.get_current_pose().pose
+		#self.scene.add_box(box_name, box_pose, size=(0.6, 0.4, 0.6))
+		# Path: starts searching in .ros --> ../catkin_ws/src/coffee_on_table/stl_Files --> No it doesn't -.-
+		# TODO Make path to parameter
+		# x comes out of EEF, Y shows upwords, Z to the left (front view)
+		self.scene.add_mesh("box", box_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Zwischenplatte.STL",size=(0.001, 0.001, 0.001))
+		print self.scene.get_known_object_names()
+		# TODO: Set pose reference frame
 
 	def moveToSearchPose(self):
 		# drive to position where r = 0.4 and h = 0.6
@@ -300,6 +319,11 @@ def main(args):
 		# Initialize ros-node and Class
 		rospy.init_node('ur5-controler', anonymous=True)
 		ur5 = ur5Controler()
+
+		rospy.sleep(2)
+		ur5.scene.remove_world_object('MIR')
+		ur5.scene.remove_world_object('box')
+		ur5.addObject()
 
 		ur5.moveToSearchPose()
 		ur5.searchObject()

@@ -3,6 +3,13 @@ import sys
 from ur5_control import ur5_controller
 from find_mug_on_table import findover
 
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
+from math import pi
+from std_msgs.msg import String
+from moveit_commander.conversions import pose_to_list
+
 def main(args):
 	# Initialize ros-node and Class
 	rospy.init_node('robotControl', anonymous=True)
