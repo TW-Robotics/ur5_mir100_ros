@@ -61,10 +61,15 @@ class ur5Controler(object):
 	def baseToObj_callback(self, data):
 		self.baseToObj = data
 
+	def refresh(self):
+		return self.baseToObj
+
 	def moveToSearchPose(self):
 		# drive to position where r = 0.4 and h = 0.6
 		#jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
+		
 		jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
+		jointStates = [50*pi/180, -pi/2, pi/2, -120*pi/180, -pi/2, pi/2]
 		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
@@ -113,7 +118,7 @@ class ur5Controler(object):
 			self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
 			'''
 
-	def moveToObject(self):
+	def moveToObject(self, zDist):
 		goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
 		current_pose = self.group.get_current_pose().pose
 		goal_pose = current_pose
@@ -121,20 +126,38 @@ class ur5Controler(object):
 		goal_pose.orientation.y = 0.5
 		goal_pose.orientation.z = -0.5
 		goal_pose.orientation.w = 0.5
-		#goal_pose.position.x = goal_pos.position.x
-		#goal_pose.position.y = goal_pos.position.y
-		goal_pose.position.z = goal_pose.position.z + 0.4
+		goal_pose.position.x = self.baseToObj.position.x
+		goal_pose.position.y = self.baseToObj.position.y
+		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
 
 		self.execute_move(goal_pose)
+		self.move_joint_to_target(5, pi/2)
 
-	def moveToGrappingPose(self):
+	def moveToGrappingPose(self, alpha):
+		#goal_pose = self.baseToObj
+		#goal_pose.position.x = self.group.get_current_pose().pose.position.x
+		#goal_pose.position.y = self.group.get_current_pose().pose.position.y
+		#goal_pose.position.z = self.group.get_current_pose().pose.position.z
+		#self.execute_move(goal_pose)
+		
+		#actStates = self.group.get_current_joint_values()
+		#print actStates[5]
+		#print alpha
+		#print "move to " + str(alpha - actStates[5])
+		#self.move_joint_to_target(5, alpha + actStates[5])
 		goal_pose = self.baseToObj
 		self.execute_move(goal_pose)
 
 	def searchObject(self):
 		#while self.camToObj.position.x == 0 and self.camToObj.position.y == 0 and self.camToObj.position.z == 0:
 			#print self.camToObj
-			self.move_joint(0, 10)
+			self.move_joint(0, 25)
+
+	def correctPositionXY(self, x_goal, y_goal):
+		goal_pose = self.group.get_current_pose().pose
+		goal_pose.position.x = x_goal/1000
+		goal_pose.position.y = y_goal/1000
+		self.execute_move(goal_pose)
 
 	# Publish the robot's trajectory
 	def display_trajectory(self, plan):

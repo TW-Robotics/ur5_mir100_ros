@@ -90,6 +90,7 @@ class rossinator(object):
 		pubPose.orientation.y = rxyzw[1]
 		pubPose.orientation.z = rxyzw[2]
 		pubPose.orientation.w = rxyzw[3]
+		#print pubPose
 		self.object_pos_pub.publish(pubPose)
 
 	# Get the pose of the camera dependent on the robot pose
@@ -134,9 +135,13 @@ class rossinator(object):
 
 	# Calculate and publish pose where to grab the cup
 	def find_handle(self, threshold):
+		self.coc.x = int(self.coc.x)
+		self.coc.y = int(self.coc.y)
+		self.obj_radius = int(self.obj_radius)
 		# Set all pixels to 255, which are farer away then "threshold" (depends on robot pre-position)
 		# TODO: Write function which calculates best threshold by it's own with percent of white/black pixels 
 		cv2.threshold(self.cv_depth_image, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image)
+		print threshold
 		# Convert the image to uint8 to make it processible with other functions
 		self.cv_depth_image = np.uint8(self.cv_depth_image)
 		# Blur the image to lose small regions which could be detected wrong
@@ -186,6 +191,10 @@ class rossinator(object):
 						biggestDistPos_px.y = x
 		# Store Point of Interest
 		poi = biggestDistPos_px
+		poi.x = int(poi.x)
+		poi.y = int(poi.y)
+
+		#self.cv_rgb_image = self.cv_depth_image
 
 		# Calculate grab-point and grab-pose
 		grabPoint = Point()
@@ -203,7 +212,7 @@ class rossinator(object):
 			# Grab-Point is in the middle of the poi and where v intersects with the radius
 			grabPoint.x = int(poi.x + v.x * (lv-self.obj_radius)/2)
 			grabPoint.y = int(poi.y + v.y * (lv-self.obj_radius)/2)
-			grabPoint.z = self.depth_array[grabPoint.x, grabPoint.y]
+			grabPoint.z = self.depth_array[grabPoint.y, grabPoint.x]
 			# print grabPoint
 
 			# Calculation of angle alpha of vecotr v to axis
@@ -212,16 +221,23 @@ class rossinator(object):
 			x_axis.x = 1
 			x_axis.y = 0
 			lx_axis = 1
+			lv = 1	# Set length to 1 because v is already resized
 			dotProduct = v.x*x_axis.x + v.y*x_axis.y
 			alpha = math.acos(dotProduct/(lv*lx_axis))
 
 			# Detect if angle is positive or negative
 			if poi.y > self.coc.y:
 				alpha = -alpha
+			print alpha*180/pi
+			# Greifbar von 0 bis 180 grad, wenn letztes Gelenk auf 90 grad gedreht ist
 			# TODO Calculate angle in case it is bigger than 90 deg (grabable?)
-			#print alpha*180/pi
+			if alpha < 0:
+				alpha = pi + alpha # + = - -alpha
+				print "Corrected to " + str(alpha*180/pi)
 
-			quats = tf.transformations.quaternion_from_euler(alpha, -pi/2, pi/2, 'rzyx')
+			quats = tf.transformations.quaternion_from_euler(alpha-pi/2, -pi/2, pi/2, 'rzyx')
+			# TOOL0quats = tf.transformations.quaternion_from_euler(0, 0, alpha, 'rxyz')
+			self.alpha = alpha
 			#quats = tf.transformations.quaternion_from_euler(0, -pi/2, pi/2+alpha, 'rzyx')
 			#quats = tf.transformations.quaternion_from_euler(pi/2, alpha, 0, 'rxyz')
 			#print quats
@@ -250,14 +266,19 @@ class rossinator(object):
 		cv2.line(self.cv_rgb_image, (self.coc.x, self.coc.y), (poi.x, poi.y), (150,150,0))
 
 		# Display the images
+		cv2.imshow("CutOff", self.cv_depth_image)
+		#cv2.waitKey(0)
+
+		#inp = raw_input("Press something for second image: ")[0]
 		cv2.imshow("Circles", self.cv_rgb_image)
 		cv2.waitKey(1)
-		cv2.imshow("CutOff", self.cv_depth_image)
-		cv2.waitKey(1)
 
-		if grabPoint.z != 0:
+		inp = raw_input("point correct? y/n: ")[0]
+
+		if grabPoint.z != 0 and inp == 'y':
 			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
 			self.pub_object_pose(grabPoint, quats)
+			print "Grab-Point z: " + str(grabPoint.z)
 			return True
 		return False
 
@@ -284,8 +305,8 @@ class rossinator(object):
 							self.is_approximation = True
 							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
 						self.is_approximation = False
-						obj_center_pos = self.calculate_center_coordinates(center_x, center_y, depth)
-						self.pub_object_pose(obj_center_pos, [0, 0, 0, 1])
+						self.obj_center_pos = self.calculate_center_coordinates(center_x, center_y, depth)
+						self.pub_object_pose(self.obj_center_pos, [0, 0, 0, 1])
 
 						#print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
 						self.obj_radius = (inner_box.xmax-inner_box.xmin)/2

@@ -19,25 +19,41 @@ def main(args):
 		ur5.searchObject()
 		print "Dist: " + str(ur5.distToObj)
 	imgProc.inner_in_outer()
-	while ur5.distToObj > 0.8:
+	while ur5.distToObj > 0.7:
 		imgProc.inner_in_outer()
 		print "Found Cup... Following"
 		ur5.followObject()
 	print "Driving to Cup"
 	
-	ur5.moveToObject()
+	zDist = 350
+	rospy.rostime.wallsleep(0.5)
+	imgProc.inner_in_outer()
+	rospy.rostime.wallsleep(0.5)
+	ur5.moveToObject(zDist)
+	imgProc.inner_in_outer()
+	#print "Correcting Position"
+	#ur5.correctPositionXY(imgProc.obj_center_pos.x, imgProc.obj_center_pos.y)
+	#ur5.move_xyz(-imgProc.obj_center_pos.x/1000, -imgProc.obj_center_pos.y/1000, 0)
+	#zDist = zDist - 40
 	
+	imgProc.inner_in_outer()
+	zDist = zDist-50
+	rospy.rostime.wallsleep(0.5)
 	print "Analyse depth-image"
-	while imgProc.find_handle(300) == False:
+	#while True:
+	while True:
 		print "search"
 		rospy.rostime.wallsleep(0.5)
 		imgProc.inner_in_outer()
-		inp = raw_input("search handle? y/n: ")[0]
-		imgProc.find_handle(300)
+		#inp = raw_input("search handle? y/n: ")[0]
+		state = imgProc.find_handle(zDist)
+		if state == True:
+			break
 		#inp = raw_input("Move robot? y/n: ")[0]
 	print "Found grapping Position"
 	rospy.rostime.wallsleep(0.5)	# needed to get actual position
-	ur5.moveToGrappingPose()
+	ur5.refresh()
+	ur5.moveToGrappingPose(imgProc.alpha)
 	print "At grapping position"
 
 	try:

@@ -1,12 +1,12 @@
 #!/bin/bash
 echo "Running ROS stuff..."
 echo "Starting roscore"
-xterm -e "roscore" &
+#xterm -e "roscore" &
 sleep 2
-xterm -hold -e "roslaunch coffee_on_table bringUp_camera.launch" &
+#xterm -hold -e "roslaunch coffee_on_table bringUp_camera.launch" &
 xterm -hold -e "roslaunch coffee_on_table img_rotate.launch" &
 xterm -hold -e "roslaunch coffee_on_table yolotest.launch" &
-xterm -geometry 96x24+0-0 -hold -e "rosrun coffee_on_table cupfind cup" &
+#xterm -geometry 96x24+0-0 -hold -e "rosrun coffee_on_table cupfind cup" &
 
 xterm -hold -e "roslaunch ur_modern_driver ur5_bringup.launch limited:=true robot_ip:=192.168.4.103" &
 sleep 5
