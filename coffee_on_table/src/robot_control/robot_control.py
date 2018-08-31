@@ -9,57 +9,54 @@ def main(args):
 
 	ur5 = ur5_controller.ur5Controler()
 	imgProc = findover.rossinator()
-	#while True:
-	#	print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(imgProc.obj_center.x*1000, imgProc.obj_center.y*1000, imgProc.obj_center.z*1000)
 
+	##### Searching for the object
+	# Move the UR5 to the search-pose
 	ur5.moveToSearchPose()
-	print imgProc.inner_in_outer()
-	while imgProc.inner_in_outer() == False:
+	# As long as the searched object is not visible
+	while imgProc.refresh_center_pos() == False:
 		print "Searching"
 		ur5.searchObject()
-		print "Dist: " + str(ur5.distToObj)
-	imgProc.inner_in_outer()
+		print "Distance to object: " + str(ur5.distToObj)
+
+	##### Follow the found object
 	while ur5.distToObj > 0.7:
-		imgProc.inner_in_outer()
 		print "Found Cup... Following"
+		imgProc.refresh_center_pos()
 		ur5.followObject()
+		print "Distance to object: " + str(ur5.distToObj)
 	print "Driving to Cup"
 	
+	##### Driving over the object
 	zDist = 350
-	rospy.rostime.wallsleep(0.5)
-	imgProc.inner_in_outer()
-	rospy.rostime.wallsleep(0.5)
-	ur5.moveToObject(zDist)
-	imgProc.inner_in_outer()
+	# Get the actual center position
+	imgProc.refresh_center_pos()
+	# Move over the object
+	ur5.moveOverObject(zDist)
+
 	#print "Correcting Position"
 	#ur5.correctPositionXY(imgProc.obj_center_pos.x, imgProc.obj_center_pos.y)
 	#ur5.move_xyz(-imgProc.obj_center_pos.x/1000, -imgProc.obj_center_pos.y/1000, 0)
 	#zDist = zDist - 40
 	
-	imgProc.inner_in_outer()
-	zDist = zDist-50
-	rospy.rostime.wallsleep(0.5)
+	##### Locating the handle of the cup
 	print "Analyse depth-image"
-	#while True:
 	while True:
-		print "search"
-		rospy.rostime.wallsleep(0.5)
-		imgProc.inner_in_outer()
-		#inp = raw_input("search handle? y/n: ")[0]
-		state = imgProc.find_handle(zDist)
+		print "Searching for handle..."
+		imgProc.refresh_center_pos()
+		state = imgProc.find_handle(zDist-50)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
 		if state == True:
 			break
-		#inp = raw_input("Move robot? y/n: ")[0]
-	print "Found grapping Position"
+	print "Found grabbing Position"
 	rospy.rostime.wallsleep(0.5)	# needed to get actual position
-	ur5.refresh()
-	ur5.moveToGrappingPose(imgProc.alpha)
-	print "At grapping position"
+	ur5.moveToGrabbingPose(imgProc.alpha)
+	print "At grabbing position"
+	return True
 
 	try:
 		rospy.spin()
 	except KeyboardInterrupt:
-		print ("Shutting down ROS Cupfinder")
+		print ("Shutting down ROS Robot Control")
 
 if __name__ == '__main__':
 	main(sys.argv)

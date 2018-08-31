@@ -133,6 +133,12 @@ class rossinator(object):
 		except CvBridgeError as e:
 			print(e)
 
+	def refresh_center_pos(self):
+		rospy.rostime.wallsleep(0.1)
+		state = self.inner_in_outer()
+		rospy.rostime.wallsleep(0.1)
+		return state
+
 	# Calculate and publish pose where to grab the cup
 	def find_handle(self, threshold):
 		self.coc.x = int(self.coc.x)
@@ -141,7 +147,6 @@ class rossinator(object):
 		# Set all pixels to 255, which are farer away then "threshold" (depends on robot pre-position)
 		# TODO: Write function which calculates best threshold by it's own with percent of white/black pixels 
 		cv2.threshold(self.cv_depth_image, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image)
-		print threshold
 		# Convert the image to uint8 to make it processible with other functions
 		self.cv_depth_image = np.uint8(self.cv_depth_image)
 		# Blur the image to lose small regions which could be detected wrong
@@ -266,7 +271,7 @@ class rossinator(object):
 		cv2.line(self.cv_rgb_image, (self.coc.x, self.coc.y), (poi.x, poi.y), (150,150,0))
 
 		# Display the images
-		cv2.imshow("CutOff", self.cv_depth_image)
+		#cv2.imshow("CutOff", self.cv_depth_image)
 		#cv2.waitKey(0)
 
 		#inp = raw_input("Press something for second image: ")[0]
@@ -275,11 +280,15 @@ class rossinator(object):
 
 		inp = raw_input("point correct? y/n: ")[0]
 
+		if grabPoint.z == 0:
+			grabPoint.z = self.coc.z
+
 		if grabPoint.z != 0 and inp == 'y':
 			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
 			self.pub_object_pose(grabPoint, quats)
 			print "Grab-Point z: " + str(grabPoint.z)
 			return True
+		print "No depht-value, trying again"
 		return False
 
 
@@ -312,6 +321,7 @@ class rossinator(object):
 						self.obj_radius = (inner_box.xmax-inner_box.xmin)/2
 						self.coc.x = center_x
 						self.coc.y = center_y
+						self.coc.z = depth
 
 						# Old + Debug
 						#else:

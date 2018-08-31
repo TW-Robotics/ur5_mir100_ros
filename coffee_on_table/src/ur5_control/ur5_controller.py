@@ -108,7 +108,7 @@ class ur5Controler(object):
 
 			#if self.distToObj <= 0.8:
 				#print "Distance to obj: " + str(self.distToObj)
-			#	self.moveToObject()
+			#	self.moveOverObject()
 
 			'''print "move joint 5"
 			act_jointStates = self.group.get_current_joint_values()
@@ -118,22 +118,28 @@ class ur5Controler(object):
 			self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
 			'''
 
-	def moveToObject(self, zDist):
+	def moveOverObject(self, zDist):
 		goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
 		current_pose = self.group.get_current_pose().pose
 		goal_pose = current_pose
-		goal_pose.orientation.x = 0.5
-		goal_pose.orientation.y = 0.5
-		goal_pose.orientation.z = -0.5
-		goal_pose.orientation.w = 0.5
+		#goal_pose.orientation.x = 0.5
+		#goal_pose.orientation.y = 0.5
+		#goal_pose.orientation.z = -0.5
+		#goal_pose.orientation.w = 0.5
+
+		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
+		goal_pose.orientation.x = quats[0]
+		goal_pose.orientation.y = quats[1]
+		goal_pose.orientation.z = quats[2]
+		goal_pose.orientation.w = quats[3]
 		goal_pose.position.x = self.baseToObj.position.x
 		goal_pose.position.y = self.baseToObj.position.y
 		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
 
 		self.execute_move(goal_pose)
-		self.move_joint_to_target(5, pi/2)
+		#self.move_joint_to_target(5, pi/2)
 
-	def moveToGrappingPose(self, alpha):
+	def moveToGrabbingPose(self, alpha):
 		#goal_pose = self.baseToObj
 		#goal_pose.position.x = self.group.get_current_pose().pose.position.x
 		#goal_pose.position.y = self.group.get_current_pose().pose.position.y
