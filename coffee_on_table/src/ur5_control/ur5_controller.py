@@ -66,42 +66,35 @@ class ur5Controler(object):
 		self.baseToObj = data
 
 	def addObject(self):
-		rospy.sleep(2)
-		box_pose = geometry_msgs.msg.PoseStamped()
-		box_pose.header.frame_id = self.robot.get_planning_frame()
-		box_pose.pose.orientation.w = 1.0
-		box_pose.pose.position.x = -0.2
-		box_pose.pose.position.y = 0
-		box_pose.pose.position.z = -0.3
+		obj_pose = geometry_msgs.msg.PoseStamped()
+		obj_pose.header.frame_id = self.robot.get_planning_frame()
+		obj_pose.pose.orientation.w = 1.0
+		obj_pose.pose.position.x = -0.2
+		obj_pose.pose.position.y = 0
+		obj_pose.pose.position.z = -0.3
 		box_name = "MIR"
-		box_pose.pose = self.group.get_current_pose().pose
-		#self.scene.add_box(box_name, box_pose, size=(0.6, 0.4, 0.6))
-		# Path: starts searching in .ros --> ../catkin_ws/src/coffee_on_table/stl_Files --> No it doesn't -.-
+		self.scene.add_box(box_name, obj_pose, size=(0.6, 0.4, 0.6))
+
+	def attachEEF(self):
+		rospy.sleep(2)
+		# Define the pose at the end of the robot
+		eef_pose = geometry_msgs.msg.PoseStamped()
+		eef_pose.header.frame_id = self.robot.get_planning_frame()
+		eef_pose.pose = self.group.get_current_pose().pose
+		#eef_pose.pose.position.y = eef_pose.pose.position.y - 0.144
+
+		# Import the STL-Files
 		# TODO Make path to parameter
-		# x comes out of EEF, Y shows upwords, Z to the left (front view)
-		
-		'''self.scene.add_mesh("gripper", box_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
-		self.scene.add_mesh("cam", box_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+		# x comes out of EEF, Y shows upwords, Z to the left (front view)		
+		self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
+		self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
 		rospy.sleep(1)
-		print self.scene.get_known_object_names()
+		#print self.scene.get_known_object_names()
 
+		# Attach the EEF to the robot
 		eef_link = self.group.get_end_effector_link()
+		self.scene.attach_mesh(eef_link, "gripper")
 		self.scene.attach_mesh(eef_link, "cam")
-		self.scene.attach_mesh(eef_link, "gripper")'''
-		print self.group.get_end_effector_link()
-		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
-		self.move_to_pose(goalPose)
-
-		self.group.set_end_effector_link("gripper")
-
-		print self.group.get_end_effector_link()
-		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
-		self.move_to_pose(goalPose)
-		#print self.robot.get_group_names()
-		#print self.robot.get_current_state()
-		#print self.group.get_interface_description()
-
-		# TODO: Set pose reference frame
 
 	def moveToSearchPose(self):
 		# drive to position where r = 0.4 and h = 0.6
@@ -340,10 +333,8 @@ def main(args):
 		rospy.init_node('ur5-controler', anonymous=True)
 		ur5 = ur5Controler()
 
-		'''rospy.sleep(2)
-		ur5.scene.remove_world_object('cam')
-		ur5.scene.remove_world_object('gripper')
-		'''
+		ur5.scene.remove_world_object()
+		ur5.attachEEF()
 		ur5.addObject()
 
 		ur5.moveToSearchPose()
