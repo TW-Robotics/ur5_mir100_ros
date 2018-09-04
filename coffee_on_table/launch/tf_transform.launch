@@ -1,5 +1,6 @@
 <launch>
 	<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0 0 0 -0.5 0.5 -0.5 0.5 ee_link camera_link 100" /> <!-- 100ms = 10Hz-->
+	<node pkg="tf" type="static_transform_publisher" name="gripper_tool0_publisher" args="0 0 0.144 0 0 0 1 tool0 gripper 100" /> 
 	<node pkg="coffee_on_table" type="camera_tf_listener.py" name="camera_base_listener" />
 	<node pkg="coffee_on_table" type="object_tf_broadcaster.py" name="object_camera_broadcaster" />
 	<node pkg="coffee_on_table" type="object_tf_listener.py" name="object_tf_listener" />
