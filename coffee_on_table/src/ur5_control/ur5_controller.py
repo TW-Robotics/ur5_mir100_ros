@@ -80,15 +80,15 @@ class ur5Controler(object):
 		# TODO Make path to parameter
 		# x comes out of EEF, Y shows upwords, Z to the left (front view)
 		
-		self.scene.add_mesh("gripper", box_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
+		'''self.scene.add_mesh("gripper", box_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
 		self.scene.add_mesh("cam", box_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
 		rospy.sleep(1)
 		print self.scene.get_known_object_names()
 
 		eef_link = self.group.get_end_effector_link()
 		self.scene.attach_mesh(eef_link, "cam")
-		self.scene.attach_mesh(eef_link, "gripper")
-		'''print self.group.get_end_effector_link()
+		self.scene.attach_mesh(eef_link, "gripper")'''
+		print self.group.get_end_effector_link()
 		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
 		self.move_to_pose(goalPose)
 
@@ -96,7 +96,7 @@ class ur5Controler(object):
 
 		print self.group.get_end_effector_link()
 		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
-		self.move_to_pose(goalPose)'''
+		self.move_to_pose(goalPose)
 		#print self.robot.get_group_names()
 		#print self.robot.get_current_state()
 		#print self.group.get_interface_description()
@@ -340,10 +340,10 @@ def main(args):
 		rospy.init_node('ur5-controler', anonymous=True)
 		ur5 = ur5Controler()
 
-		rospy.sleep(2)
+		'''rospy.sleep(2)
 		ur5.scene.remove_world_object('cam')
 		ur5.scene.remove_world_object('gripper')
-		
+		'''
 		ur5.addObject()
 
 		ur5.moveToSearchPose()
