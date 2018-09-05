@@ -21,25 +21,31 @@ def main(args):
 		ur5.searchObject()
 		print "Distance to object: " + str(ur5.distToObj)
 
-	zDist = 350
+	zDist = 350-39
 	##### Follow the found object
-	while not ur5.isGoalReachable(zDist):
+	while True:
 		print "Found Cup... Following"
 		imgProc.refresh_center_pos()
 		ur5.followObject()
 		print "Distance to object: " + str(ur5.distToObj)
+		imgProc.refresh_center_pos()
+		if ur5.isGoalReachable(zDist):
+			break
 	print "Driving to Cup"
 	
 	##### Driving over the object
 	# Get the actual center position
+	rospy.sleep(1)
 	imgProc.refresh_center_pos()
 	# Move over the object
 	ur5.moveOverObject(zDist)
 
-	#print "Correcting Position"
-	#ur5.correctPositionXY(imgProc.obj_center_pos.x, imgProc.obj_center_pos.y)
-	#ur5.move_xyz(-imgProc.obj_center_pos.x/1000, -imgProc.obj_center_pos.y/1000, 0)
-	#zDist = zDist - 40
+	print "Correcting Position"
+	imgProc.refresh_center_pos()
+	rospy.sleep(1)
+	print imgProc.obj_center_pos.x
+	print imgProc.obj_center_pos.y
+	ur5.correctPositionXY(imgProc.obj_center_pos.x, -imgProc.obj_center_pos.y)
 	
 	##### Locating the handle of the cup
 	print "Analyse depth-image"

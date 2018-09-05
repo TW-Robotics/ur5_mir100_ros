@@ -83,14 +83,15 @@ class rossinator(object):
 	# Publish Pose of object
 	def pub_object_pose(self, xyz, rxyzw):
 		pubPose = Pose()
-		pubPose.position.x = xyz.x / 1000
-		pubPose.position.y = xyz.y / 1000
-		pubPose.position.z = xyz.z / 1000
+		print xyz
+		pubPose.position.x = float(xyz.x) / 1000
+		pubPose.position.y = float(xyz.y) / 1000
+		pubPose.position.z = float(xyz.z) / 1000
 		pubPose.orientation.x = rxyzw[0]
 		pubPose.orientation.y = rxyzw[1]
 		pubPose.orientation.z = rxyzw[2]
 		pubPose.orientation.w = rxyzw[3]
-		#print pubPose
+		print pubPose
 		self.object_pos_pub.publish(pubPose)
 
 	# Get the pose of the camera dependent on the robot pose
@@ -168,7 +169,7 @@ class rossinator(object):
 
 		# Calculate the area, where around the center of the cup, where should be searched for the handle
 		# TODO: Don't search in area of the cup center
-		sizeFactor = 1.5 
+		sizeFactor = 1.5
 		start_y = int(self.coc.x - sizeFactor*self.obj_radius)
 		start_x = int(self.coc.y - sizeFactor*self.obj_radius)
 		end_y = int(self.coc.x + sizeFactor*self.obj_radius)
@@ -282,10 +283,14 @@ class rossinator(object):
 		inp = raw_input("point correct? y/n: ")[0]
 
 		if grabPoint.z == 0:
+			print "Depth-value invalid. Taking Value from publisher."
 			grabPoint.z = self.coc.z
 
 		if grabPoint.z != 0 and inp == 'y':
+			#print grabPoint
 			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
+			#print self.coc
+			#print grabPoint
 			self.pub_object_pose(grabPoint, quats)
 			print "Grab-Point z: " + str(grabPoint.z)
 			return True
@@ -319,7 +324,12 @@ class rossinator(object):
 						self.pub_object_pose(self.obj_center_pos, [0, 0, 0, 1])
 
 						#print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
-						self.obj_radius = (inner_box.xmax-inner_box.xmin)/2
+						obj_radius1 = (inner_box.xmax-inner_box.xmin)/2
+						obj_radius2 = (inner_box.ymax-inner_box.ymin)/2
+						if obj_radius1 > obj_radius2:
+							self.obj_radius = obj_radius2
+						else:
+							self.obj_radius = obj_radius1 
 						self.coc.x = center_x
 						self.coc.y = center_y
 						self.coc.z = depth
@@ -368,6 +378,7 @@ class rossinator(object):
 		center_point.x = x
 		center_point.y = y
 		center_point.z = z
+		print "Center Point: " + str(center_point)
 		return center_point
 
 	# Return True if inner box is in outer box (accroding to strictness), otherwise False

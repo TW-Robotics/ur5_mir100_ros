@@ -101,7 +101,7 @@ class ur5Controler(object):
 		#jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
 		
 		jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
-		jointStates = [50*pi/180, -pi/2, pi/2, -120*pi/180, -pi/2, pi/2]
+		jointStates = [110*pi/180, -pi/2, pi/2, -120*pi/180, -pi/2, pi/2]
 		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
@@ -183,9 +183,10 @@ class ur5Controler(object):
 		return True		
 
 	def moveOverObject(self, zDist):
-		goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
+		#goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
 		current_pose = self.group.get_current_pose().pose
-		goal_pose = current_pose
+		goal_pose = geometry_msgs.msg.Pose()
+		#goal_pose = current_pose
 		#goal_pose.orientation.x = 0.5
 		#goal_pose.orientation.y = 0.5
 		#goal_pose.orientation.z = -0.5
@@ -216,6 +217,9 @@ class ur5Controler(object):
 		#print "move to " + str(alpha - actStates[5])
 		#self.move_joint_to_target(5, alpha + actStates[5])
 		goal_pose = self.baseToObj
+		goal_pose.position.z = goal_pose.position.z + 0.15
+		self.execute_move(goal_pose)
+		goal_pose.position.z = goal_pose.position.z - 0.15
 		self.execute_move(goal_pose)
 
 	def searchObject(self):
@@ -225,8 +229,8 @@ class ur5Controler(object):
 
 	def correctPositionXY(self, x_goal, y_goal):
 		goal_pose = self.group.get_current_pose().pose
-		goal_pose.position.x = x_goal/1000
-		goal_pose.position.y = y_goal/1000
+		goal_pose.position.x = goal_pose.position.x + float(x_goal)/1000
+		goal_pose.position.y = goal_pose.position.y + float(y_goal)/1000
 		self.execute_move(goal_pose)
 
 	# Publish the robot's trajectory
