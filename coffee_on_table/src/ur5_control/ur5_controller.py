@@ -81,7 +81,7 @@ class ur5Controler(object):
 		eef_pose = geometry_msgs.msg.PoseStamped()
 		eef_pose.header.frame_id = self.robot.get_planning_frame()
 		eef_pose.pose = self.group.get_current_pose().pose
-		#eef_pose.pose.position.y = eef_pose.pose.position.y - 0.144
+		eef_pose.pose.position.y = eef_pose.pose.position.y - 0.144
 
 		# Import the STL-Files
 		# TODO Make path to parameter
@@ -334,7 +334,7 @@ def main(args):
 		ur5 = ur5Controler()
 
 		ur5.scene.remove_world_object()
-		ur5.attachEEF()
+		#ur5.attachEEF()
 		ur5.addObject()
 
 		ur5.moveToSearchPose()
