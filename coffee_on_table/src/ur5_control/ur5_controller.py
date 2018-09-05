@@ -149,6 +149,38 @@ class ur5Controler(object):
 			print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
 			self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
 			'''
+	def isReachable(self, goalPose):
+		oldTime = self.group.get_planning_time()
+		self.group.set_planning_time(0.5)
+		self.group.set_pose_target(goalPose)
+		plan = self.group.plan()
+		self.group.clear_pose_targets()
+		self.group.set_planning_time(oldTime)
+		if len(plan.joint_trajectory.joint_names) == 0:
+			return False
+		return True
+
+	def isGoalReachable(self, zDist):
+		current_pose = self.group.get_current_pose().pose
+		goal_pose = current_pose
+
+		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
+		goal_pose.orientation.x = quats[0]
+		goal_pose.orientation.y = quats[1]
+		goal_pose.orientation.z = quats[2]
+		goal_pose.orientation.w = quats[3]
+		goal_pose.position.x = self.baseToObj.position.x
+		goal_pose.position.y = self.baseToObj.position.y
+		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
+
+		if not self.isReachable(goal_pose):
+			return False
+
+		goal_pose.position.z = self.baseToObj.position.z
+
+		if not self.isReachable(goal_pose):
+			return False
+		return True		
 
 	def moveOverObject(self, zDist):
 		goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
@@ -336,6 +368,14 @@ def main(args):
 		ur5.scene.remove_world_object()
 		#ur5.attachEEF()
 		ur5.addObject()
+
+		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707]
+		returnV = ur5.isReachable(goalPose)
+		print returnV
+
+		goalPose = [0, 0.191, 1.937, 0.707, 0, 0, 0.707]
+		returnV = ur5.isReachable(goalPose)
+		print returnV
 
 		ur5.moveToSearchPose()
 		ur5.searchObject()

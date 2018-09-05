@@ -200,6 +200,7 @@ class rossinator(object):
 		poi.y = int(poi.y)
 
 		#self.cv_rgb_image = self.cv_depth_image
+		rgb_image = self.cv_rgb_image
 
 		# Calculate grab-point and grab-pose
 		grabPoint = Point()
@@ -248,34 +249,34 @@ class rossinator(object):
 			#print quats
 
 			# Draw grab-point
-			cv2.circle(self.cv_rgb_image ,(grabPoint.x, grabPoint.y),2,(0,150,150),3)
+			cv2.circle(rgb_image ,(grabPoint.x, grabPoint.y),2,(0,150,150),3)
 
 		# Draw circle for border of cup
-		cv2.circle(self.cv_rgb_image ,(self.coc.x,self.coc.y),self.obj_radius,(0,255,0),2)
+		cv2.circle(rgb_image ,(self.coc.x,self.coc.y),self.obj_radius,(0,255,0),2)
 		# Draw circle for center of cup
-		cv2.circle(self.cv_rgb_image ,(self.coc.x,self.coc.y),2,(0,0,255),3)
+		cv2.circle(rgb_image ,(self.coc.x,self.coc.y),2,(0,0,255),3)
 
 		# Draw circles and lines for area of interest
-		cv2.circle(self.cv_rgb_image ,(start_y, start_x),2,(0,255,0),3)
-		cv2.circle(self.cv_rgb_image ,(start_y, end_x),2,(0,255,0),3)
-		cv2.circle(self.cv_rgb_image ,(end_y, start_x),2,(0,255,0),3)
-		cv2.circle(self.cv_rgb_image ,(end_y, end_x),2,(0,255,0),3)
-		cv2.line(self.cv_rgb_image, (start_y, start_x), (end_y, start_x), (150,150,0))
-		cv2.line(self.cv_rgb_image, (start_y, start_x), (start_y, end_x), (150,150,0))
-		cv2.line(self.cv_rgb_image, (end_y, end_x), (start_y, end_x), (150,150,0))
-		cv2.line(self.cv_rgb_image, (end_y, end_x), (end_y, start_x), (150,150,0))
+		cv2.circle(rgb_image ,(start_y, start_x),2,(0,255,0),3)
+		cv2.circle(rgb_image ,(start_y, end_x),2,(0,255,0),3)
+		cv2.circle(rgb_image ,(end_y, start_x),2,(0,255,0),3)
+		cv2.circle(rgb_image ,(end_y, end_x),2,(0,255,0),3)
+		cv2.line(rgb_image, (start_y, start_x), (end_y, start_x), (150,150,0))
+		cv2.line(rgb_image, (start_y, start_x), (start_y, end_x), (150,150,0))
+		cv2.line(rgb_image, (end_y, end_x), (start_y, end_x), (150,150,0))
+		cv2.line(rgb_image, (end_y, end_x), (end_y, start_x), (150,150,0))
 
 		# Draw circle for point of interest
-		cv2.circle(self.cv_rgb_image ,(poi.x, poi.y),2,(0,0,255),3)
+		cv2.circle(rgb_image ,(poi.x, poi.y),2,(0,0,255),3)
 		# Draw line from poi to center of cup
-		cv2.line(self.cv_rgb_image, (self.coc.x, self.coc.y), (poi.x, poi.y), (150,150,0))
+		cv2.line(rgb_image, (self.coc.x, self.coc.y), (poi.x, poi.y), (150,150,0))
 
 		# Display the images
 		#cv2.imshow("CutOff", self.cv_depth_image)
 		#cv2.waitKey(0)
 
 		#inp = raw_input("Press something for second image: ")[0]
-		cv2.imshow("Circles", self.cv_rgb_image)
+		cv2.imshow("Circles", rgb_image)
 		cv2.waitKey(1)
 
 		inp = raw_input("point correct? y/n: ")[0]

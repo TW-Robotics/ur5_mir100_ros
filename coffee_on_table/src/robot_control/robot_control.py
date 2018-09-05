@@ -10,6 +10,8 @@ def main(args):
 	ur5 = ur5_controller.ur5Controler()
 	imgProc = findover.rossinator()
 
+	ur5.addObject()
+
 	##### Searching for the object
 	# Move the UR5 to the search-pose
 	ur5.moveToSearchPose()
@@ -19,8 +21,9 @@ def main(args):
 		ur5.searchObject()
 		print "Distance to object: " + str(ur5.distToObj)
 
+	zDist = 350
 	##### Follow the found object
-	while ur5.distToObj > 0.7:
+	while not ur5.isGoalReachable(zDist):
 		print "Found Cup... Following"
 		imgProc.refresh_center_pos()
 		ur5.followObject()
@@ -28,7 +31,6 @@ def main(args):
 	print "Driving to Cup"
 	
 	##### Driving over the object
-	zDist = 350
 	# Get the actual center position
 	imgProc.refresh_center_pos()
 	# Move over the object
