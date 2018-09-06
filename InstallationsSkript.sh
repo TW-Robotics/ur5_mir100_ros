@@ -62,6 +62,12 @@ sudo add-apt-repository "deb http://realsense-hw-public.s3.amazonaws.com/Debian/
 sudo apt-get install librealsense2*
 ln -s "$(pwd)/realsense" ~/catkin_ws/src/realsense
 
+# PIP
+#sudo apt-get install python-pip
+
+# PYASSIMP
+#sudo pip install pyassimp
+
 # UR5
 echo "Downloading UR5-Stuff"
 git clone https://github.com/ThomasTimm/ur_modern_driver
@@ -71,7 +77,7 @@ echo "https://github.com/iron-ox/ur_modern_driver/commit/883070d0b6c0c32b78bb1ca
 
 echo "ATTENTION: To make model-loading with pyassimp on ros kinetic work, make the following change:"
 echo "https://launchpadlibrarian.net/263969718/patch.txt"
-echo "In File '/usr/lib/python2.7/dist-packages/pyassimp/core.py' change line 33 to 'load_mem, release, dll = helper.search_library()'"
+echo "In File '/usr/lib/python2.7/dist-packages/pyassimp/core.py' change line 33 to 'load, release, dll = helper.search_library()'"
 
 sudo apt-get install ros-kinetic-ur-gazebo
 sudo apt-get install ros-kinetic-moveit-commander
@@ -92,5 +98,8 @@ sudo cp /home/mluser/git/butler/coffee_on_table/ur5_Files/moveit_rviz.launch /op
 sudo cp /home/mluser/git/butler/coffee_on_table/ur5_Files/moveitTF.rviz /opt/ros/kinetic/share/ur5_moveit_config/launch
 sudo cp /home/mluser/git/butler/coffee_on_table/ur5_Files/move_group.launch /opt/ros/kinetic/share/ur5_moveit_config/launch
 sudo cp /home/mluser/git/butler/coffee_on_table/ur5_Files/ur5.launch /opt/ros/kinetic/share/ur_gazebo/launch
+
+# MOVEIT
+sudo apt install ros-kinetic-moveit
 
 echo "Installation completed!"

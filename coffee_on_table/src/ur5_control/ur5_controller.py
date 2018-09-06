@@ -66,6 +66,7 @@ class ur5Controler(object):
 		self.baseToObj = data
 
 	def addObject(self):
+		rospy.sleep(2)
 		obj_pose = geometry_msgs.msg.PoseStamped()
 		obj_pose.header.frame_id = self.robot.get_planning_frame()
 		obj_pose.pose.orientation.w = 1.0
@@ -74,6 +75,7 @@ class ur5Controler(object):
 		obj_pose.pose.position.z = -0.3
 		box_name = "MIR"
 		self.scene.add_box(box_name, obj_pose, size=(0.6, 0.4, 0.6))
+		rospy.sleep(1)
 
 	def attachEEF(self):
 		rospy.sleep(2)
@@ -86,8 +88,11 @@ class ur5Controler(object):
 		# Import the STL-Files
 		# TODO Make path to parameter
 		# x comes out of EEF, Y shows upwords, Z to the left (front view)		
-		self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
-		self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+		self.scene.add_mesh("gripper", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
+		self.scene.add_mesh("cam", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+
 		rospy.sleep(1)
 		#print self.scene.get_known_object_names()
 
@@ -366,7 +371,7 @@ class ur5Controler(object):
 def main(args):
 	try:
 		# Initialize ros-node and Class
-		rospy.init_node('ur5-controler', anonymous=True)
+		rospy.init_node('ur5Controler', anonymous=True)
 		ur5 = ur5Controler()
 
 		ur5.scene.remove_world_object()
