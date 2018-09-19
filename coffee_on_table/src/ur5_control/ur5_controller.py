@@ -378,14 +378,14 @@ def main(args):
 		#ur5.attachEEF()
 		ur5.addObject()
 
-		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707]
+		'''goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707]
 		returnV = ur5.isReachable(goalPose)
 		print returnV
 
 		goalPose = [0, 0.191, 1.937, 0.707, 0, 0, 0.707]
 		returnV = ur5.isReachable(goalPose)
 		print returnV
-
+		'''
 		ur5.moveToSearchPose()
 		ur5.searchObject()
 		ur5.followObject()

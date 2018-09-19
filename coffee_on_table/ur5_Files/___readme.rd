@@ -6,3 +6,5 @@
 #	moveitTF.rviz 			  /opt/ros/kinetic/share/ur5_moveit_config/launch
 # 	move_group.launch     /opt/ros/kinetic/share/ur5_moveit_config/launch
 #	ur5.launch				/opt/ros/kinetic/share/ur_gazebo/launch
+#   ur5_joint_limited_robot.urdf.xacro		/opt/ros/kinetic/share/ur_description/urdf
+#   ur5_robot.urdf.xacro		/opt/ros/kinetic/share/ur_description/urdf
