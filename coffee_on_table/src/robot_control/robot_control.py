@@ -1,16 +1,17 @@
-## License: Apache 2.0. See LICENSE file in root directory.
-## Copyright(c) 2017 Intel Corporation. All Rights Reserved.
+import rospy
+from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import Image
+from std_msgs.msg import Header
 
-#####################################################
-##              Align Depth to Color               ##
-#####################################################
-
-# First import the library
 import pyrealsense2 as rs
-# Import Numpy for easy array manipulation
 import numpy as np
-# Import OpenCV for easy image rendering
 import cv2
+
+cam_info_pub = rospy.Publisher("/camera/aligned_depth_to_color/camera_info", CameraInfo, queue_size=10)
+colorImg_pub = rospy.Publisher("/camera/color/image_raw", Image, queue_size=10)
+depthImg_pub = rospy.Publisher("/camera/aligned_depth_to_color/image_raw", Image, queue_size=10)
+
+width, height = 640, 480
 
 # Create a pipeline
 pipeline = rs.pipeline()
@@ -18,22 +19,20 @@ pipeline = rs.pipeline()
 #Create a config and configure the pipeline to stream
 #  different resolutions of color and depth streams
 config = rs.config()
-config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
-config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+config.enable_stream(rs.stream.depth, width, 480, rs.format.z16, 30)
+config.enable_stream(rs.stream.color, width, 480, rs.format.bgr8, 30)
 
 # Start streaming
 profile = pipeline.start(config)
 
 def main(args):
+	rospy.init_node("Camera_Python_Wrapper")
+	h = Header()
+	h.stamp = rospy.Time.now() # Note you need to call rospy.init_node() before this will work
+
 	# Getting the depth sensor's depth scale (see rs-align example for explanation)
 	depth_sensor = profile.get_device().first_depth_sensor()
 	depth_scale = depth_sensor.get_depth_scale()
-	print("Depth Scale is: " , depth_scale)
-
-	# We will be removing the background of objects more than
-	#  clipping_distance_in_meters meters away
-	clipping_distance_in_meters = 1 #1 meter
-	clipping_distance = clipping_distance_in_meters / depth_scale
 
 	# Create an align object
 	# rs.align allows us to perform alignment of depth frames to others frames
@@ -42,6 +41,7 @@ def main(args):
 	align = rs.align(align_to)
 
 	# Streaming loop
+	# TODO Timen?!
 	try:
 		while True:
 			# Get frameset of color and depth
@@ -62,11 +62,8 @@ def main(args):
 			depth_image = np.asanyarray(aligned_depth_frame.get_data())
 			color_image = np.asanyarray(color_frame.get_data())
 			
-			# Remove background - Set pixels further than clipping_distance to grey
-			grey_color = 153
-			depth_image_3d = np.dstack((depth_image,depth_image,depth_image)) #depth image is 1 channel, color is 3 channels
-			bg_removed = np.where((depth_image_3d > clipping_distance) | (depth_image_3d <= 0), grey_color, color_image)
-			
+			pub_msgs(h, color_image, depth_image)
+
 			# Render images
 			depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 			images = np.hstack((bg_removed, depth_colormap))
@@ -76,7 +73,56 @@ def main(args):
 	finally:
 		pipeline.stop()
 
-'''import pyrealsense2 as rs
+def pub_msgs(h, color_img, depth_img):
+	cam_info_pub.publish(make_camera_msg(h))
+	colorImg_pub.publish(make_colorImg_msg(h, color_img))
+	depthImg_pub.publish(make_depthImg_msg(h, depth_img))
+
+def make_camera_msg(h):
+	camera_info_msg = CameraInfo()
+	fx, fy = 616.741455078125, 616.919677734375
+	cx, cy = 324.817626953125, 238.0455780029297
+	camera_info_msg.header = h
+	camera_info_msg.header.frame_id = "camera_color_optical_frame"
+	camera_info_msg.distortion_model ="plumb_bob"
+	camera_info_msg.width = width
+	camera_info_msg.height = height
+	camera_info_msg.K = [fx, 0, cx,
+						 0, fy, cy,
+						 0, 0, 1]
+	camera_info_msg.D = [0, 0, 0, 0]
+	camera_info_msg.P = [fx, 0, cx, 0,
+						 0, fy, cy, 0,
+						 0, 0, 1, 0]
+	return camera_info_msg
+	
+# BILD CONVERTIEREN MIT CV2_BRIDGE?
+def make_colorImg_msg(h, color_image):
+	img_msg = Image()
+	img_msg.header = h
+	img_msg.header.frame_id = "camera_color_optical_frame"
+	img_msg.height = height
+	img_msg.width = width
+	img_msg.encoding = "rgb8"
+	img_msg.is_bigendian = 0
+	img_msg.step = 1920
+	img_msg.data = color_image
+	return img_msg
+
+def make_depthImg_msg(h, depth_image):
+	img_msg = Image()
+	img_msg.header = h
+	img_msg.header.frame_id = "camera_color_optical_frame"
+	img_msg.height = height
+	img_msg.width = width
+	img_msg.encoding = "16UC1"
+	img_msg.is_bigendian = 0
+	img_msg.step = 1280
+	img_msg.data = depth_image
+	return img_msg
+
+'''
+import pyrealsense2 as rs
 import numpy as np
 import cv2
 
