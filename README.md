@@ -13,3 +13,11 @@ Neue Python-Packages in ROS erstellen und ausführen:
 - Im bin-Ordner (project/bin) ein File mit dem Packagenamen ("myPackage") anlegen und in der main dieses Files das eigentliche .py-File angeben (Dieses wird ausgeführt, wenn man das Package ruft)
 - catkin_make ausführen
 - Ausführen mit rosrun project myPackage --> Es wird in setup.py-File nachgeschaut, ob es das Package gibt, das File im bin-Ordner gerufen und dieses startet dann das eigentliche .py-File im src-Ordner
+
+### Gemeinsamen ROS-Core verwenden ###
+- sudo nano ~/.bashrc
+- export ROS_MASTER_URI=http://192.168.12.20:11311 (z.B. von MiR)
+- export ROS_IP=192.168.12.247 (EIGENE!)
+- Speichern
+- In allen Terminals: source ~/.bashrc
+--> Beim zurückändern muss ROS_MASTER_URI auf localhost gesetzt werden und ROS_HOSTNAME=mlworkstation1
