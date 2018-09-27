@@ -106,4 +106,5 @@ sudo cp /home/mluser/git/butler/coffee_on_table/ur5_Files/ur5_robot.urdf.xacro /
 # MOVEIT
 sudo apt install ros-kinetic-moveit
 
+catkin_make
 echo "Installation completed!"
