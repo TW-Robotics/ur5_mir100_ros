@@ -83,7 +83,6 @@ class rossinator(object):
 	# Publish Pose of object
 	def pub_object_pose(self, xyz, rxyzw):
 		pubPose = Pose()
-		print xyz
 		pubPose.position.x = float(xyz.x) / 1000
 		pubPose.position.y = float(xyz.y) / 1000
 		pubPose.position.z = float(xyz.z) / 1000
@@ -91,7 +90,7 @@ class rossinator(object):
 		pubPose.orientation.y = rxyzw[1]
 		pubPose.orientation.z = rxyzw[2]
 		pubPose.orientation.w = rxyzw[3]
-		print pubPose
+		#print pubPose
 		self.object_pos_pub.publish(pubPose)
 
 	# Get the pose of the camera dependent on the robot pose
@@ -137,7 +136,9 @@ class rossinator(object):
 	def refresh_center_pos(self):
 		rospy.rostime.wallsleep(0.1)
 		state = self.inner_in_outer()
-		rospy.rostime.wallsleep(0.1)
+		#cv2.imshow("CutOff", self.cv_depth_image)
+		#cv2.waitKey(1)
+		#rospy.rostime.wallsleep(0.1)
 		return state
 
 	# Calculate and publish pose where to grab the cup
@@ -300,6 +301,7 @@ class rossinator(object):
 
 	def inner_in_outer(self):
 		foundInnerInOuter = False
+		depth_scale_factor = 1#0.0010000000475
 
 		# Check for box in box
 		for outer_box in self.currentBoundingBoxes.bounding_boxes:
@@ -308,7 +310,7 @@ class rossinator(object):
 					if inner_box.Class == self.innerClass and self.box_is_in_box(outer_box, inner_box):
 						center_x = inner_box.xmin+(inner_box.xmax-inner_box.xmin)/2
 						center_y = inner_box.ymin+(inner_box.ymax-inner_box.ymin)/2
-						depth = self.depth_array[center_y][center_x]
+						depth = self.depth_array[center_y][center_x]*depth_scale_factor
 						# print("center is: " + str(center_y) + ", " + str(center_x) + " Depth: " + str(self.depth))
 						# Draw circle on center of bounding box of inner class
 						cv2.circle(self.cv_depth_image,(center_x, center_y), 10, (0,0,0), -1)
@@ -318,7 +320,8 @@ class rossinator(object):
 						if depth == 0:		# approximate if there is no depth-data
 							#print "APPROXIMATION: "
 							self.is_approximation = True
-							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin)
+							#print "APPROXIMATION"
+							depth = self.distance_to_object_approximator(inner_box.xmax - inner_box.xmin) * depth_scale_factor
 						self.is_approximation = False
 						self.obj_center_pos = self.calculate_center_coordinates(center_x, center_y, depth)
 						self.pub_object_pose(self.obj_center_pos, [0, 0, 0, 1])
@@ -378,7 +381,8 @@ class rossinator(object):
 		center_point.x = x
 		center_point.y = y
 		center_point.z = z
-		print "Center Point: " + str(center_point)
+		#if center_point.z != 0:
+		#	print "Center Point: " + str(center_point)
 		return center_point
 
 	# Return True if inner box is in outer box (accroding to strictness), otherwise False

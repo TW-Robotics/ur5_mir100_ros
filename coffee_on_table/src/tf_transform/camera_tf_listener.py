@@ -34,7 +34,7 @@ def main(args):
 	rate = rospy.Rate(10.0)
 	while not rospy.is_shutdown():
 		try:
-			(trans, rot) = listener.lookupTransform('/camera_link', '/base_link', rospy.Time(0))
+			(trans, rot) = listener.lookupTransform('/camera_link', '/base_link_ur', rospy.Time(0))
 			#(trans, rot) = listener.lookupTransform('/camera_link', '/camera_color_frame', rospy.Time(0))
 			camToBasePub.publish(listToPose(trans, rot))
 		except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):

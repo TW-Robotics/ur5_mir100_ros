@@ -116,6 +116,9 @@ class ur5Controler(object):
 		#rospy.sleep(5)
 
 		#while True:
+			#print "POS"
+			#print self.baseToObj.position
+			#print self.camToObj.position
 			print "move joint 1"
 			act_jointStates = self.group.get_current_joint_values()
 			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)

@@ -37,10 +37,16 @@ class rossinator:
 		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self.depth_image_callback, queue_size=1)
 	
 	def color_image_callback(self, data):
+		#cv2.imshow("CutOff", self.bridge.imgmsg_to_cv2(data, "bgr8"))
+		#cv2.waitKey(1)
+		#rospy.rostime.wallsleep(0.1)
 		image = self.rotate_image(data, "bgr8")
 		self.colorImgPub.publish(self.bridge.cv2_to_imgmsg(image,"bgr8"))
 
 	def depth_image_callback(self, data):
+		cv2.imshow("IMG", self.bridge.imgmsg_to_cv2(data, "32FC1"))
+		#cv2.waitKey(1)
+		#rospy.rostime.wallsleep(0.1)
 		image = self.rotate_image(data, "32FC1")
 		self.depthImgPub.publish(self.bridge.cv2_to_imgmsg(image,"32FC1"))
 
