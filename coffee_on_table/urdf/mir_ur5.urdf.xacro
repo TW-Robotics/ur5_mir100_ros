@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="mir_ur5">
+  <!-- include macros for M-10iA and the eef model -->
+  <xacro:include filename="$(find mir_description)/urdf/mir.urdf.xacro"/>
+  <xacro:include filename="$(find ur_description)/urdf/ur5_robot.urdf.xacro" />
+
+  <!-- create the robot + eef combo itself as a macro -->
+
+
+
+
+    <!-- attach eef to M-10iA model -->
+    <!-- Note: this assumes that the 'my_eef' macro defines a 'base_link'
+         link which is the start of it's kinematic chain (if any) -->
+    <joint name="compJoint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="base_footprint" />
+      <child link="base_link_ur" />
+    </joint>
+
+
+</robot>

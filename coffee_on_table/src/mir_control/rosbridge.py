@@ -21,6 +21,7 @@ class RosbridgeSetup():
 
     def publish(self, topic, obj):
         pub = { "op": "publish", "topic": topic, "msg": obj }
+        #print obj
         self.send(pub)
 
     def subscribe(self, topic, callback, throttle_rate=-1):
@@ -77,6 +78,7 @@ class RosbridgeSetup():
     def send(self, obj):
         try:
             self.connection.sendString(json.dumps(obj))
+            print obj
         except:
             traceback.print_exc()
             raise

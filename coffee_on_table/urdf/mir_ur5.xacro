@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="mir_ur5">
+  <xacro:include filename="$(find coffee_on_table)/urdf/mir_ur5.urdf.xacro" />
+  <xacro:mir_ur5 prefix=""/>
+</robot>

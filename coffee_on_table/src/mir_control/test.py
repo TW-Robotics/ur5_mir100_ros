@@ -6,6 +6,7 @@ from rosbridge_2_0 import json
 # robot url
 robot = rb.boot()
 
+
 # wait for pose data - do not uncomment
 while(len(rb.data['pose'])) == 0:
     print "waiting for pos - 0.5s"
@@ -25,14 +26,16 @@ for i in range(1000):
 '''
 # Simple movement patterns
 
-for i in range(1000):
-    rb.move(robot, rb.forward()[0], rb.forward()[1])
+#for i in range(1000):
+rb.move(robot, rb.forward()[0], rb.forward()[1])
 #time.sleep(2)
-for i in range(1000):
-    rb.move(robot, rb.forward()[0], rb.forward()[1])
-time.sleep(2)
-for i in range(1000):
-    rb.move(robot, rb.backwards()[0], rb.backwards()[1])
+#for i in range(1000):
+#    rb.move(robot, rb.forward()[0], rb.forward()[1])
+#time.sleep(2)
+#for i in range(1000):
+rb.moveToGoal(robot)
+#time.sleep(2)
+    #rb.move(robot, rb.backwards()[0], rb.backwards()[1])
 '''time.sleep(2)
 for i in range(1000):
     rb.move(robot, rb.turn_left()[0], rb.turn_left()[1])
@@ -46,10 +49,11 @@ for i in range(1000):
 
 # Accessing and printing robot data
 
-for i in range(100):
-    rb.move(robot, rb.turn_right()[0], rb.turn_right()[1])
-    print json.dumps(rb.data['pose'], indent = 2)
-
+#for i in range(100):
+#    rb.move(robot, rb.turn_right()[0], rb.turn_right()[1])
+#print json.dumps(rb.data['pose'], indent = 2)
+print json.dumps(rb.data['goal'], indent = 2)
+print json.dumps(rb.data['velocity'], indent = 2)
 
 
 # Rosservice
