@@ -1,4 +1,11 @@
 <launch>
 	<!-- URDF -->
 	<include file="$(find coffee_on_table)/urdf/upload_mir_ur_urdf.launch" />
+	  <arg name="robot_x"   default="0.0" />
+	  <arg name="robot_y"   default="0.0" />
+	  <arg name="robot_yaw" default="0.0" />
+
+	  <!-- Spawn the robot into Gazebo -->
+	  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model mir
+	    -x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) -z 0.5" respawn="false" output="screen"/>
 </launch>
