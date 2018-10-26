@@ -1,0 +1,4 @@
+<launch>
+	<!-- URDF -->
+	<include file="$(find coffee_on_table)/urdf/upload_mir_ur_urdf.launch" />
+</launch>

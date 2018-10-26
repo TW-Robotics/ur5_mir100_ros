@@ -1,7 +1,5 @@
 #!/bin/bash
-xterm -hold -e "roscore" &
-sleep 3
-xterm -hold -e "roslaunch ur_gazebo ur5.launch limited:=true" &
+xterm -hold -e "roslaunch coffee_on_table mir_ur5.launch limited:=true" &
 sleep 5
 xterm -hold -e "roslaunch ur5_moveit_config ur5_moveit_planning_execution.launch limited:=true sim:=true" &
 sleep 2

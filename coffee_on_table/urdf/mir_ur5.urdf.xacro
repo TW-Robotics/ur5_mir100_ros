@@ -1,21 +1,36 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://ros.org/wiki/xacro" name="mir_ur5">
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="ur5">
+
+  <!-- common stuff -->
+  <xacro:include filename="$(find ur_description)/urdf/common.gazebo.xacro" />
+  <xacro:include filename="$(find mir_description)/urdf/include/common.gazebo.xacro" />
+
   <!-- include macros for M-10iA and the eef model -->
-  <xacro:include filename="$(find mir_description)/urdf/mir.urdf.xacro"/>
-  <xacro:include filename="$(find ur_description)/urdf/ur5_robot.urdf.xacro" />
+  <!-- MiR100 base -->
+  <xacro:include filename="$(find mir_description)/urdf/include/mir_100_v1.urdf.xacro" />
+  <xacro:mir_100 prefix=""/>
+  <xacro:controller_plugin_gazebo robot_namespace=""/>
 
-  <!-- create the robot + eef combo itself as a macro -->
-
-
+  <!-- ur5 -->
+  <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
+  <xacro:ur5_robot prefix="" joint_limited="false"/>
+  <!-- arm -->
+  <!--<xacro:ur5_robot prefix="" joint_limited="false"/>-->
+  <link name="world" />
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link_ur" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>-->
 
 
     <!-- attach eef to M-10iA model -->
     <!-- Note: this assumes that the 'my_eef' macro defines a 'base_link'
          link which is the start of it's kinematic chain (if any) -->
     <joint name="compJoint" type="fixed">
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0.5" rpy="0 0 0" />
       <parent link="base_footprint" />
-      <child link="base_link_ur" />
+      <child link="world" />
     </joint>
 
 
