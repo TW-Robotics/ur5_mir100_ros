@@ -83,23 +83,25 @@ class ur5Controler(object):
 		eef_pose = geometry_msgs.msg.PoseStamped()
 		eef_pose.header.frame_id = self.robot.get_planning_frame()
 		eef_pose.pose = self.group.get_current_pose().pose
-		eef_pose.pose.position.y = eef_pose.pose.position.y - 0.144
+		eef_pose.pose.position.y = eef_pose.pose.position.y + 0.007
 
 		# Import the STL-Files
 		# TODO Make path to parameter
 		# x comes out of EEF, Y shows upwords, Z to the left (front view)		
 		#self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
 		#self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
-		self.scene.add_mesh("gripper", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
-		self.scene.add_mesh("cam", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("gripper", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("cam", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+		self.scene.add_mesh("eef", eef_pose, "/home/johannes/catkin_ws/src/coffee_on_table/stl_Files/EEF.STL", size=(0.001, 0.001, 0.001))
 
 		rospy.sleep(1)
 		#print self.scene.get_known_object_names()
 
 		# Attach the EEF to the robot
 		eef_link = self.group.get_end_effector_link()
-		self.scene.attach_mesh(eef_link, "gripper")
-		self.scene.attach_mesh(eef_link, "cam")
+		#self.scene.attach_mesh(eef_link, "gripper")
+		#self.scene.attach_mesh(eef_link, "cam")
+		self.scene.attach_mesh(eef_link, "eef")
 
 	def moveToSearchPose(self):
 		# drive to position where r = 0.4 and h = 0.6
@@ -378,7 +380,7 @@ def main(args):
 		ur5 = ur5Controler()
 
 		ur5.scene.remove_world_object()
-		#ur5.attachEEF()
+		ur5.attachEEF()
 		ur5.addObject()
 
 		'''goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707]
