@@ -13,10 +13,14 @@ def main(args):
 	pub = rospy.Publisher('cmd_vel', geometry_msgs.msg.Twist, queue_size=10)
 	pub1 = rospy.Publisher('move_base_simple/goal', geometry_msgs.msg.PoseStamped, queue_size=10)
 	pub2 = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
+	pub3 = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
 
 	rospy.init_node('talker', anonymous=True)
 
-	toDo = 1
+	toDo = 4
+
+	if toDo == 4:
+		pub3.publish("set_standard_digital_out(2,True)")
 
 	if toDo == 1:
 		rate = rospy.Rate(10) # 10hz
