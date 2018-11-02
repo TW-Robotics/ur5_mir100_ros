@@ -8,16 +8,42 @@ from geometry_msgs.msg import PoseWithCovarianceStamped, Quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseActionGoal
 from math import radians, degrees
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
+from ur_msgs.msg import IOStates
+
+ioStates = IOStates()
+trueVar = True
+
+'''pub4 = rospy.Publisher('/ur_driver/io_states', IOStates, queue_size=10)
+
+def iostatesCallback(data):
+	global ioStates
+	ioStates = data
+	print "BEFORE"
+	print ioStates.digital_out_states[4].state
+	ioStates.digital_out_states[4].state = trueVar
+	print "AFTER"
+	print ioStates.digital_out_states[4].state
+	pub4.publish(ioStates)'''
 
 def main(args):
 	pub = rospy.Publisher('cmd_vel', geometry_msgs.msg.Twist, queue_size=10)
 	pub1 = rospy.Publisher('move_base_simple/goal', geometry_msgs.msg.PoseStamped, queue_size=10)
 	pub2 = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
 	pub3 = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
+	sub = rospy.Subscriber('/ur_driver/io_states', IOStates, iostatesCallback)
 
 	rospy.init_node('talker', anonymous=True)
+	#rospy.spin()
+	#return
 
-	toDo = 4
+	toDo = 5
+
+	#if toDo == 5:
+		#global ioStates
+		#ioStates.digital_out_states[4].state = trueVar
+		#print "AFTER"
+		#print ioStates.digital_out_states[4].state
+		#pub4.publish(ioStates)
 
 	if toDo == 4:
 		pub3.publish("set_standard_digital_out(2,True)")
