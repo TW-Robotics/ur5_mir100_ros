@@ -26,6 +26,7 @@ def moveToGoal(x, y, rz):
 	#mirGoalMsg.goal_id.stamp = rospy.Time.now()					# optional
 	#mirGoalMsg.goal_id.id = '10'									# optional
 
+	rospy.sleep(1)		# Wait for publisher to be registered
 	pub.publish(mirGoalMsg)
 	#print quats[2]
 	#print quats[3]

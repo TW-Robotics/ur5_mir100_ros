@@ -10,30 +10,30 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
 bridge = CvBridge()
-
+print "here"
 cam_info_pub = rospy.Publisher("/camera/aligned_depth_to_color/camera_info", CameraInfo, queue_size=10)
 colorImg_pub = rospy.Publisher("/camera/color/image_raw", Image, queue_size=10)
 depthImg_pub = rospy.Publisher("/camera/aligned_depth_to_color/image_raw", Image, queue_size=10)
-
+print "here"
 width, height = 640, 480
 
 # Create a pipeline
 pipeline = rs.pipeline()
-
+print "here"
 #Create a config and configure the pipeline to stream
 #  different resolutions of color and depth streams
 config = rs.config()
 config.enable_stream(rs.stream.depth, width, height, rs.format.z16, 30)
 config.enable_stream(rs.stream.color, width, height, rs.format.bgr8, 30)
-
+print "here"
 # Start streaming
 profile = pipeline.start(config)
-
+print "here"
 def main(args):
 	rospy.init_node("Camera_Python_Wrapper")
 	h = Header()
 	h.stamp = rospy.Time.now() # Note you need to call rospy.init_node() before this will work
-
+	
 	# Getting the depth sensor's depth scale (see rs-align example for explanation)
 	depth_sensor = profile.get_device().first_depth_sensor()
 	depth_scale = depth_sensor.get_depth_scale()

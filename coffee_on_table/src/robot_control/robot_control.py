@@ -11,11 +11,11 @@ def main(args):
 
 	# Make sure the gripper is open
 	#gripper.open()
-	#mir.moveToGoal(14.3, 6.65, 45)
+	mir.moveToGoal(13.35, 6.66, 0)
 
 	ur5 = ur5_controller.ur5Controler()
 	imgProc = findover.rossinator()
-
+	return
 	ur5.addObject()
 
 	##### Searching for the object

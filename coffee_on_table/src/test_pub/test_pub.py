@@ -30,13 +30,13 @@ def main(args):
 	pub1 = rospy.Publisher('move_base_simple/goal', geometry_msgs.msg.PoseStamped, queue_size=10)
 	pub2 = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
 	pub3 = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
-	sub = rospy.Subscriber('/ur_driver/io_states', IOStates, iostatesCallback)
+	#sub = rospy.Subscriber('/ur_driver/io_states', IOStates, iostatesCallback)
 
 	rospy.init_node('talker', anonymous=True)
 	#rospy.spin()
 	#return
 
-	toDo = 5
+	toDo = 3
 
 	#if toDo == 5:
 		#global ioStates
@@ -75,7 +75,7 @@ def main(args):
 		myGoalMsg.header.frame_id = '/map' # Note: the frame_id must be map
 		#myGoalMsg.goal.target_pose.header.stamp = rospy.Time.now()	# optional
 		myGoalMsg.goal.target_pose.header.frame_id = '/map'	# optional
-		myGoalMsg.goal.target_pose.pose.position.x = 13.35
+		myGoalMsg.goal.target_pose.pose.position.x = 13
 		myGoalMsg.goal.target_pose.pose.position.y = 6.65
 		myGoalMsg.goal.target_pose.pose.position.z = 0.0 # z must be 0.0 (no height in the map)
 
