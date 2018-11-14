@@ -2,10 +2,16 @@ import rospy
 import sys
 from ur5_control import ur5_controller
 from find_mug_on_table import findover
+import gripper_control.gripper_control as gripper
+import mir_control.mir_control as mir
 
 def main(args):
 	# Initialize ros-node and Class
 	rospy.init_node('robotControl', anonymous=True)
+
+	# Make sure the gripper is open
+	#gripper.open()
+	#mir.moveToGoal(14.3, 6.65, 45)
 
 	ur5 = ur5_controller.ur5Controler()
 	imgProc = findover.rossinator()
@@ -20,6 +26,10 @@ def main(args):
 		print "Searching"
 		ur5.searchObject()
 		print "Distance to object: " + str(ur5.distToObj)
+
+	##### Move the MiR to the Object
+	# Calculate world position with tfs
+	#mir.moveToGoal(14.3, 6.65, 45)	
 
 	zDist = 350-39
 	##### Follow the found object
@@ -59,6 +69,9 @@ def main(args):
 	rospy.rostime.wallsleep(0.5)	# needed to get actual position
 	ur5.moveToGrabbingPose(imgProc.alpha)
 	print "At grabbing position"
+
+	##### Close the gripper to grasp object
+	#gripper.close()
 	return True
 
 	try:

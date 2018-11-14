@@ -1,0 +1,7 @@
+#! /usr/bin/env python
+
+import sys
+import mir_control.mir_control
+
+if __name__ == 'main':
+    mir_control.mir_control.main(sys.argv)
