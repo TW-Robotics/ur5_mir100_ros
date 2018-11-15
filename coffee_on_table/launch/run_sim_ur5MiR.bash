@@ -13,8 +13,8 @@ xterm -hold -e "roslaunch ur5_moveit_config moveit_rviz.launch config:=true" &
 
 
 # Further MiR-Stuff
-xterm -hold -e "roslaunch mir_gazebo mir_maze_world.launch" &
-sleep 5
+#xterm -hold -e "roslaunch mir_gazebo mir_maze_world.launch" &
+#sleep 5
 #xterm -hold -e "rosservice call /gazebo/unpause_physics"&
 #sleep 5
 #xterm -hold -e "roslaunch mir_gazebo fake_localization.launch delta_x:=-10.0 delta_y:=-10.0"&

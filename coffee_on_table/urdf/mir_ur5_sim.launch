@@ -7,5 +7,5 @@
 
 	  <!-- Spawn the robot into Gazebo -->
 	  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model mir
-	    -x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) -z 0.5" respawn="false" output="screen"/>
+	    -x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) -z 1.5" respawn="false" output="screen"/>
 </launch>

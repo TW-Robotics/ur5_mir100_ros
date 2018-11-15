@@ -4,11 +4,10 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Status1
         - /TF1
         - /TF1/Frames1
       Splitter Ratio: 0.5
-    Tree Height: 317
+    Tree Height: 304
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -79,45 +78,11 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
-          back_laser_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
           base:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-          base_footprint:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
           base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          base_link_ur:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          bl_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          bl_caster_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          br_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          br_caster_wheel_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -127,50 +92,7 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          fl_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          fl_caster_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
           forearm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          fr_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          fr_caster_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          front_laser_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          imu_frame:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-          imu_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-          left_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_wheel_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -180,10 +102,6 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          surface:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
           tool0:
             Alpha: 1
             Show Axes: false
@@ -257,45 +175,11 @@ Visualization Manager:
           Expand Link Details: false
           Expand Tree: false
           Link Tree Style: Links in Alphabetic Order
-          back_laser_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
           base:
             Alpha: 1
             Show Axes: false
             Show Trail: false
-          base_footprint:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
           base_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          base_link_ur:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          bl_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          bl_caster_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          br_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          br_caster_wheel_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -305,50 +189,7 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          fl_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          fl_caster_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
           forearm_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          fr_caster_rotation_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          fr_caster_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          front_laser_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          imu_frame:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-          imu_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-          left_wheel_link:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
-            Value: true
-          right_wheel_link:
             Alpha: 1
             Show Axes: false
             Show Trail: false
@@ -358,10 +199,6 @@ Visualization Manager:
             Show Axes: false
             Show Trail: false
             Value: true
-          surface:
-            Alpha: 1
-            Show Axes: false
-            Show Trail: false
           tool0:
             Alpha: 1
             Show Axes: false
@@ -399,36 +236,40 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        back_laser_link:
-          Value: false
         base:
           Value: false
-        base_footprint:
-          Value: true
         base_link:
-          Value: false
-        base_link_ur:
           Value: true
+        camera_aligned_depth_to_color_frame:
+          Value: false
+        camera_aligned_depth_to_infra1_frame:
+          Value: false
+        camera_color_frame:
+          Value: false
+        camera_color_optical_frame:
+          Value: false
+        camera_depth_frame:
+          Value: false
+        camera_depth_optical_frame:
+          Value: false
+        camera_infra1_frame:
+          Value: false
+        camera_infra1_optical_frame:
+          Value: false
+        camera_link:
+          Value: false
         ee_link:
           Value: false
         forearm_link:
           Value: false
-        front_laser_link:
-          Value: false
-        imu_frame:
-          Value: false
-        imu_link:
-          Value: false
-        left_wheel_link:
-          Value: false
-        right_wheel_link:
-          Value: false
+        obj_center_pose:
+          Value: true
         shoulder_link:
           Value: false
-        surface:
-          Value: true
         tool0:
           Value: true
+        tool0_controller:
+          Value: false
         upper_arm_link:
           Value: false
         world:
@@ -445,42 +286,43 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        base_footprint:
+        world:
           base_link:
-            back_laser_link:
-              {}
-            front_laser_link:
-              {}
-            imu_link:
-              imu_frame:
+            base:
+              tool0_controller:
                 {}
-            left_wheel_link:
-              {}
-            right_wheel_link:
-              {}
-            surface:
-              {}
-          world:
-            base_link_ur:
-              base:
-                {}
-              shoulder_link:
-                upper_arm_link:
-                  forearm_link:
-                    wrist_1_link:
-                      wrist_2_link:
-                        wrist_3_link:
-                          ee_link:
-                            {}
-                          tool0:
-                            {}
+            shoulder_link:
+              upper_arm_link:
+                forearm_link:
+                  wrist_1_link:
+                    wrist_2_link:
+                      wrist_3_link:
+                        ee_link:
+                          camera_link:
+                            camera_aligned_depth_to_color_frame:
+                              camera_color_optical_frame:
+                                {}
+                              obj_center_pose:
+                                {}
+                            camera_aligned_depth_to_infra1_frame:
+                              camera_infra1_optical_frame:
+                                {}
+                            camera_color_frame:
+                              {}
+                            camera_depth_frame:
+                              camera_depth_optical_frame:
+                                {}
+                            camera_infra1_frame:
+                              {}
+                        tool0:
+                          {}
       Update Interval: 0
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_footprint
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -501,7 +343,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.95242429
+      Distance: 2.82854009
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -516,22 +358,22 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.769797266
+      Pitch: 0.319796324
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.08539701
+      Yaw: 1.49539852
     Saved: ~
 Window Geometry:
   Displays:
-    collapsed: false
-  Height: 1056
-  Hide Left Dock: false
+    collapsed: true
+  Height: 991
+  Hide Left Dock: true
   Hide Right Dock: true
   MotionPlanning:
-    collapsed: false
+    collapsed: true
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd000000040000000000000363000003dafc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000280000017e000000d700fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000001fc000001cb0000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000004a00fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006701000001ac000002560000018300ffffff000000010000010f000002affc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000002af000000ad00fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b00000003efc0100000002fb0000000800540069006d00650000000000000004b00000030000fffffffb0000000800540069006d00650100000000000004500000000000000000000003d4000003da00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000003630000036cfc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006600fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000004f0000017e000000e400fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001e004d006f00740069006f006e00200050006c0061006e006e0069006e006701000001fc000001cb0000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000005500fffffffb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006700000001d5000001e6000001d900ffffff000000010000010f000002affc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000002af000000c200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004b00000003efc0100000002fb0000000800540069006d00650000000000000004b0000003de00fffffffb0000000800540069006d00650100000000000004500000000000000000000003be0000036c00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -540,6 +382,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1853
-  X: 67
-  Y: 24
+  Width: 958
+  X: 959
+  Y: 27

@@ -3,7 +3,8 @@ import sys
 from ur5_control import ur5_controller
 from find_mug_on_table import findover
 import gripper_control.gripper_control as gripper
-import mir_control.mir_control as mir
+from mir_control import mir_control
+#import mir_control.mir_control as mir
 
 def main(args):
 	# Initialize ros-node and Class
@@ -11,10 +12,12 @@ def main(args):
 
 	# Make sure the gripper is open
 	#gripper.open()
-	mir.moveToGoal(13.35, 6.66, 0)
+	#mir.moveToGoal(13.35, 6.66, 0)
 
 	ur5 = ur5_controller.ur5Controler()
 	imgProc = findover.rossinator()
+	mir = mir_control.mirControler()
+	print mir.objToOrigin_pose
 	return
 	ur5.addObject()
 
