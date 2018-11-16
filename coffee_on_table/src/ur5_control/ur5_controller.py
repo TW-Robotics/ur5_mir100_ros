@@ -51,6 +51,7 @@ class ur5Controler(object):
 		group_name = "manipulator"
 		self.group = moveit_commander.MoveGroupCommander(group_name)
 		self.scene = moveit_commander.PlanningSceneInterface()
+		self.group.set_end_effector_link("gripper")
 
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)

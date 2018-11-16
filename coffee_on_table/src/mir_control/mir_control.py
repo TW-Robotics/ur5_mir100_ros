@@ -11,14 +11,14 @@ class mirControler(object):
 		super(mirControler, self).__init__()
 
 		rospy.Subscriber("/tf_objToOrigin", Pose, self.objToOrigin_callback, queue_size=1)
-		pub = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
+		self.pub = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)
 
 		self.objToOrigin_pose = Pose()
 
 	def objToOrigin_callback(self, data):
 		self.objToOrigin_pose = data
 
-	def moveToGoal(x, y, rz):
+	def moveToGoal(self, x, y, rz):
 		rz = float(rz)*pi/180
 
 		quats = tf.transformations.quaternion_from_euler(0, 0, rz)

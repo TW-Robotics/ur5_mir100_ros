@@ -11,19 +11,21 @@ def main(args):
 	rospy.init_node('robotControl', anonymous=True)
 
 	# Make sure the gripper is open
-	#gripper.open()
-	#mir.moveToGoal(13.35, 6.66, 0)
+	gripper.open()
 
 	ur5 = ur5_controller.ur5Controler()
 	imgProc = findover.rossinator()
 	mir = mir_control.mirControler()
-	print mir.objToOrigin_pose
-	return
-	ur5.addObject()
+
+	#mir.moveToGoal(13.35, 6.66, 0)
+	#mir.moveToGoal(9.5, 4.95, -174)
+	#rospy.sleep(10)
+	#mir.moveToGoal(9.6, 9.1, -16)
 
 	##### Searching for the object
 	# Move the UR5 to the search-pose
 	ur5.moveToSearchPose()
+
 	# As long as the searched object is not visible
 	while imgProc.refresh_center_pos() == False:
 		print "Searching"
@@ -32,7 +34,9 @@ def main(args):
 
 	##### Move the MiR to the Object
 	# Calculate world position with tfs
-	#mir.moveToGoal(14.3, 6.65, 45)	
+	imgProc.refresh_center_pos()
+	goalPose =  mir.objToOrigin_pose
+	mir.moveToGoal(goalPose.position.x, goalPose.position.y, 0)	
 
 	zDist = 350-39
 	##### Follow the found object

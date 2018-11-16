@@ -1,5 +1,6 @@
 import socket
 import time
+import sys
 
 HOST = "192.168.12.52"    	# The remote host
 PORT = 30002              	# The same port as used by the server

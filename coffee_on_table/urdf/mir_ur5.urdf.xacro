@@ -22,6 +22,10 @@
     wrist_3_lower_limit="${-pi}" wrist_3_upper_limit="${pi}"
   />
 
+  <!-- Controlbox -->
+  <xacro:include filename="$(find coffee_on_table)/urdf/controlbox.urdf" />  
+  
+
 
   <!-- Connection UR to planning frame world -->
   <link name="world" />
@@ -29,15 +33,21 @@
     <parent link="world" />
     <child link = "base_link_ur" />
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
-  </joint>-->
-
+  </joint>
 
   <!-- Connection MiR to world where UR is connected -->
-    <joint name="compJoint" type="fixed">
-      <origin xyz="0.153 -0.0325 0.892" rpy="0 0 0" /> <!-- 0.892 = 0.352 + 0.54 ; 0.153 = 0.038 + 0,115-->
-      <parent link="base_link" />
-      <child link="world" />
-    </joint>
+  <joint name="compJoint" type="fixed">
+    <origin xyz="0.153 -0.0325 0.892" rpy="0 0 0" /> <!-- 0.153 = 0.038 + 0.115; - ; 0.892 = 0.352 + 0.54-->
+    <parent link="base_link" />
+    <child link="world" />
+  </joint>
+
+  <!-- Connection controlbox to MiR -->
+  <joint name="boxJoint" type="fixed">
+    <origin xyz="0.038 0 0.352" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="controlbox" />
+  </joint>
 
 
 </robot>
