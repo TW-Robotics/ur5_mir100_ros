@@ -2,7 +2,7 @@ import rospy
 import sys
 from ur5_control import ur5_controller
 from find_mug_on_table import findover
-import gripper_control.gripper_control as gripper
+from  gripper_control import gripper_control
 from mir_control import mir_control
 #import mir_control.mir_control as mir
 
@@ -10,12 +10,16 @@ def main(args):
 	# Initialize ros-node and Class
 	rospy.init_node('robotControl', anonymous=True)
 
-	# Make sure the gripper is open
-	gripper.open()
+	#ur5 = ur5_controller.ur5Controler()
+	#imgProc = findover.rossinator()
+	#mir = mir_control.mirControler()
+	gripper = gripper_control.gripper()
 
-	ur5 = ur5_controller.ur5Controler()
-	imgProc = findover.rossinator()
-	mir = mir_control.mirControler()
+	# Make sure the gripper is open
+	#gripper.open()
+	#rospy.sleep(5)
+	#gripper.close()
+	print gripper.hasGripped()
 
 	#mir.moveToGoal(13.35, 6.66, 0)
 	#mir.moveToGoal(9.5, 4.95, -174)
