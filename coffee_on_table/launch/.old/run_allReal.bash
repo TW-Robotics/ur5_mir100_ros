@@ -7,7 +7,7 @@ echo "Running ROS stuff..."
 xterm -hold -e "rosrun coffee_on_table camera_py2ros_wrapper" &
 xterm -hold -e "roslaunch coffee_on_table img_rotate.launch" &
 xterm -hold -e "roslaunch coffee_on_table yolonet.launch" &
-#xterm -geometry 96x24+0-0 -hold -e "rosrun coffee_on_table cupfind cup" &
+#xterm -geometry 96x24+0-0 -hold -e "rosrun coffee_on_table img_processing cup" &
 
 xterm -hold -e "roslaunch ur_modern_driver ur5_bringup.launch limited:=true robot_ip:=192.168.12.52" &
 sleep 5

@@ -38,7 +38,7 @@ import tf
 		- Kamera-Image where the depth-image is aligned to the color-image
 		- Kamera-Calibration data
 	Calculates the position of the center of the innerClass in the outerClass(e.g. center of cup on table)'''
-class rossinator(object):
+class img_processing(object):
 	# Initialize CVBridge
 	bridge = CvBridge()
 	# Initialize class-variable to store bounding boxes
@@ -422,7 +422,7 @@ class rossinator(object):
 def main(args):
 	# Initialize ros-node and Class
 	rospy.init_node('cupfinder', anonymous=True)
-	cupOnTable = rossinator()
+	cupOnTable = img_processing()
 	print('Searching for ' + cupOnTable.innerClass + ' ' + cupOnTable.strictness + ' ' + cupOnTable.outerClass)
 
 	#cupOnTable.find_handle()
