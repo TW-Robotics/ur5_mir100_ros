@@ -6,6 +6,6 @@
 	<node pkg="tf" type="static_transform_publisher" name="gripper_tool0_publisher" args="0.144 0 0 0 0.707 0 0.707 ee_link gripper 100" />
 	
 	<!-- Nodes for broadcasting and listening to tf-transforms -->
-	<node pkg="coffee_on_table" type="tf_broadcaster.py" name="tf_broadcaster" />
-	<node pkg="coffee_on_table" type="tf_listener_publisher.py" name="tf_listener_publisher" />
+	<node pkg="butler" type="tf_broadcaster.py" name="tf_broadcaster" />
+	<node pkg="butler" type="tf_listener_publisher.py" name="tf_listener_publisher" />
 </launch>

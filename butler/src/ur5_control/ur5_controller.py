@@ -89,11 +89,11 @@ class ur5Controler(object):
 		# Import the STL-Files
 		# TODO Make path to parameter
 		# x comes out of EEF, Y shows upwords, Z to the left (front view)		
-		#self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
-		#self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
-		#self.scene.add_mesh("gripper", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
-		#self.scene.add_mesh("cam", eef_pose, "/home/mluser/catkin_ws/src/butler/coffee_on_table/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
-		self.scene.add_mesh("eef", eef_pose, "/home/johannes/catkin_ws/src/coffee_on_table/stl_Files/EEF.STL", size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/butler/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/butler/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("gripper", eef_pose, "/home/mluser/catkin_ws/src/butler/butler/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
+		#self.scene.add_mesh("cam", eef_pose, "/home/mluser/catkin_ws/src/butler/butler/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
+		self.scene.add_mesh("eef", eef_pose, "/home/johannes/catkin_ws/src/butler/stl_Files/EEF.STL", size=(0.001, 0.001, 0.001))
 
 		rospy.sleep(1)
 		#print self.scene.get_known_object_names()

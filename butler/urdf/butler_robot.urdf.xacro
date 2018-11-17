@@ -23,10 +23,10 @@
   />
 
   <!-- Controlbox -->
-  <xacro:include filename="$(find coffee_on_table)/urdf/controlbox.urdf" />  
+  <xacro:include filename="$(find butler)/urdf/controlbox.urdf" />  
   
   <!-- EEF -->
-  <xacro:include filename="$(find coffee_on_table)/urdf/eef.urdf" /> 
+  <xacro:include filename="$(find butler)/urdf/eef.urdf" /> 
 
 
   <!-- Connection UR to planning frame world -->
