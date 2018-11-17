@@ -1,7 +1,7 @@
 #!/bin/bash
 xterm -hold -e "roscore" &
 sleep 3
-xterm -hold -e "roslaunch coffee_on_table mir_ur5_sim.launch limited:=true" &
+xterm -hold -e "roslaunch coffee_on_table butler_robot.launch limited:=true" &
 sleep 2
 
 # Further UR-Stuff

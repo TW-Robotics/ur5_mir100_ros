@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot name="eef">
+	<!-- For Visual appearance of the EEF -->
+	<link name="eef">
+	  <visual>
+	    <geometry>
+	      <mesh filename="package://coffee_on_table/urdf/meshes/EEF.STL" scale="0.001 0.001 0.001"/>
+	    </geometry>
+	    <material name="LightGrey">
+	      <color rgba="0.7 0.7 0.7 1.0"/>
+	    </material>
+	  </visual>
+	  <collision>
+	    <geometry>
+	      <mesh filename="package://coffee_on_table/urdf/meshes/EEF.STL" scale="0.001 0.001 0.001"/>
+	    </geometry>
+	  </collision>
+	</link>
+
+	<!-- For planning with gripper as EEF -->
+    <link name="gripper">
+      <collision>
+        <geometry>
+          <box size="0.01 0.01 0.01"/>
+        </geometry>
+        <origin rpy="0 0 0" xyz="-0.01 0 0"/>
+      </collision>
+    </link>
+</robot>

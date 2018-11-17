@@ -16,9 +16,9 @@ def main(args):
 	gripper = gripper_control.gripper()
 
 	# Make sure the gripper is open
-	#gripper.open()
-	#rospy.sleep(5)
-	#gripper.close()
+	gripper.open()
+	rospy.sleep(5)
+	gripper.close()
 	print gripper.hasGripped()
 
 	#mir.moveToGoal(13.35, 6.66, 0)

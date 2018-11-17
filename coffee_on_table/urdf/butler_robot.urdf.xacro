@@ -12,7 +12,7 @@
 
   <!-- ur5 -->
   <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
-  <!--NOT LIMITED<xacro:ur5_robot prefix="" joint_limited="false"/>-->
+  <!-- UNCOMMENT FOR NOT LIMITED <xacro:ur5_robot prefix="" joint_limited="false"/>-->
   <xacro:ur5_robot prefix="" joint_limited="true"
     shoulder_pan_lower_limit="${-pi}" shoulder_pan_upper_limit="${pi}"
     shoulder_lift_lower_limit="${-pi}" shoulder_lift_upper_limit="${pi}"
@@ -25,6 +25,8 @@
   <!-- Controlbox -->
   <xacro:include filename="$(find coffee_on_table)/urdf/controlbox.urdf" />  
   
+  <!-- EEF -->
+  <xacro:include filename="$(find coffee_on_table)/urdf/eef.urdf" /> 
 
 
   <!-- Connection UR to planning frame world -->
@@ -35,9 +37,9 @@
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </joint>
 
-  <!-- Connection MiR to world where UR is connected -->
+  <!-- Connection MiR to planning frame world where UR is connected -->
   <joint name="compJoint" type="fixed">
-    <origin xyz="0.153 -0.0325 0.892" rpy="0 0 0" /> <!-- 0.153 = 0.038 + 0.115; - ; 0.892 = 0.352 + 0.54-->
+    <origin xyz="0.153 -0.0325 0.892" rpy="0 0 0" /> <!-- Caluculations: from base_footprint to surface 0.153 = 0.038 + 0.115; - ; 0.892 = 0.352 + 0.54-->
     <parent link="base_link" />
     <child link="world" />
   </joint>
@@ -49,5 +51,18 @@
     <child link="controlbox" />
   </joint>
 
+  <!-- Connection UR to EEF -->
+  <joint name="eef_fixed_joint" type="fixed">
+    <parent link="wrist_3_link" />
+    <child link="eef" />
+    <origin xyz="0.0 0.0823  0.0" rpy="${pi/2.0} 0.0 ${pi/2.0}" /> <!-- 0.0823 = wrist_3_length -->
+  </joint>
+
+  <!-- Connection of gripper-frame to EEF to set TCP -->
+  <joint name="gripper_fixed_joint" type="fixed">
+    <parent link="wrist_3_link" />
+    <child link= "gripper" />
+    <origin xyz="0.0 ${0.0823 + 0.144} 0.0" rpy="0.0 0.0 ${pi/2.0}" />
+  </joint>
 
 </robot>

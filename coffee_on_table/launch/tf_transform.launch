@@ -1,10 +1,11 @@
 <launch>
-	<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.039 0 0.055 0 0.707 0 0.707 ee_link camera_link 100" /> <!-- 100ms = 10Hz-->
-	<!--<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.039 0.01 0.025 -0.5 0.5 -0.5 0.5 ee_link camera_link 100" />-->
+	<!-- Static transforms for camera_link, camera_frame and gripper -->
+	<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.039 0 0.055 0 0.707 0 0.707 ee_link camera_link 100" />
+	<!-- 100ms = 10Hz-->
 	<node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="0 0.015 0 -0.010 0.001 0.001 1 camera_link camera_aligned_depth_to_color_frame 100" />
 	<node pkg="tf" type="static_transform_publisher" name="gripper_tool0_publisher" args="0.144 0 0 0 0.707 0 0.707 ee_link gripper 100" />
-	<!--<node pkg="tf" type="static_transform_publisher" name="gripper_tool0_publisher" args="0 0 0.144 0 0 0 1 tool0 gripper 100" />--> 
-	<node pkg="coffee_on_table" type="camera_tf_listener.py" name="camera_base_listener" />
-	<node pkg="coffee_on_table" type="object_tf_broadcaster.py" name="object_camera_broadcaster" />
-	<node pkg="coffee_on_table" type="object_tf_listener.py" name="object_tf_listener" />
+	
+	<!-- Nodes for broadcasting and listening to tf-transforms -->
+	<node pkg="coffee_on_table" type="tf_broadcaster.py" name="tf_broadcaster" />
+	<node pkg="coffee_on_table" type="tf_listener_publisher.py" name="tf_listener_publisher" />
 </launch>

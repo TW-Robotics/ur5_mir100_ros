@@ -15,7 +15,7 @@ def obj_pose_callback(data):
 	obj_center_pose = data
 
 def main(args):
-	rospy.init_node('object_tf_broadcaster')
+	rospy.init_node('tf_broadcaster')
 
 	rospy.Subscriber("/tf_objToCam", Pose, obj_pose_callback, queue_size=1)	# Subscribe to xyz-Position of object
 
