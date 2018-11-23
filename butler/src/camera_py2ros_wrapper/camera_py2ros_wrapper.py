@@ -74,9 +74,9 @@ def main(args):
 			# Render images
 			depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 			images = np.hstack((color_image, depth_colormap))
-			cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
-			cv2.imshow('Align Example', images)
-			cv2.waitKey(1)
+			#cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
+			#cv2.imshow('Align Example', images)
+			#cv2.waitKey(1)
 	
 	except KeyboardInterrupt:
 		rospy.signal_shutdown("KeyboardInterrupt")

@@ -1,10 +1,10 @@
 #!/bin/bash
 xterm -hold -e "roscore" &
 sleep 3
-#xterm -hold -e "rosrun butler camera_py2ros_wrapper" &
-#xterm -hold -e "roslaunch butler img_rotate.launch" &
-#xterm -hold -e "roslaunch butler yolonet.launch" &
-#sleep 3
+xterm -hold -e "rosrun butler camera_py2ros_wrapper" &
+xterm -hold -e "roslaunch butler img_rotate.launch" &
+xterm -hold -e "roslaunch butler yolonet.launch" &
+sleep 3
 xterm -hold -e "roslaunch butler butler_robot.launch limited:=true" &
 sleep 2
 xterm -hold -e "roslaunch ur_modern_driver ur5_bringup.launch limited:=true robot_ip:=192.168.12.52" &
