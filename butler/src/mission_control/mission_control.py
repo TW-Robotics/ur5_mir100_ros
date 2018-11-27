@@ -37,7 +37,6 @@ class parser(object):
 
 		return goals
 
-
 def main(args):
 	goals = parser().parseGoals("goals.xml")
 	for goal in goals:
