@@ -1,0 +1,23 @@
+<missions>
+	<mission>
+		<name="S1ToTable"/>
+		<startGoal="Station1"/>
+		<targetGoal="Table"/>
+		<searchObject>
+			<type="cup"/>
+			<color="orange"/>
+		</searchObject>
+		<onSuccess>
+			<action="putOnGoal">
+			<sound="success">
+			<nextMission="S2ToTable">
+			<nextGoal="none">
+		</onSuccess>
+		<onFailure>
+			<action="none">
+			<sound="failure">
+			<nextMission="none">
+			<nextGoal="S2">
+		</onFailure>
+	</mission>
+</missions>

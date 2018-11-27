@@ -15,16 +15,16 @@ def main(args):
 	mir = mir_control.mirControler()
 	gripper = gripper_control.gripper()
 
-	# Make sure the gripper is open
+	##### Make sure the gripper is open
+	print "Calibrating gripper..."
 	gripper.open()
-	rospy.sleep(5)
-	gripper.close()
-	print gripper.hasGripped()
 
-	#mir.moveToGoal(13.35, 6.66, 0)
-	#mir.moveToGoal(9.5, 4.95, -174)
-	#rospy.sleep(10)
-	#mir.moveToGoal(9.6, 9.1, -16)
+	##### Move the MiR to the Search-Goal
+	print "Moving MiR to goal-position..."
+	mir.moveToGoal(13.35, 6.66, 0)
+	while mir.isAtGoal() == False:
+		rospy.sleep(1)
+	print "MiR is at goal-position"
 
 	##### Searching for the object
 	# Move the UR5 to the search-pose
@@ -32,7 +32,7 @@ def main(args):
 
 	# As long as the searched object is not visible
 	while imgProc.refresh_center_pos() == False:
-		print "Searching"
+		print "Searching for object..."
 		ur5.searchObject()
 		print "Distance to object: " + str(ur5.distToObj)
 
@@ -82,7 +82,14 @@ def main(args):
 	print "At grabbing position"
 
 	##### Close the gripper to grasp object
-	#gripper.close()
+	gripper.close()
+	rospy.sleep(5)
+	if gripper.hasGripped() == True:
+		print "Successfully grasped object!"
+	else:
+		print "Error grasping object!"
+		return False
+
 	return True
 
 	try:
@@ -92,45 +99,3 @@ def main(args):
 
 if __name__ == '__main__':
 	main(sys.argv)
-
-
-
-
-
-'''import socket
-import time
-
-HOST = "192.168.12.248"    	# The remote host
-PORT = 30002              	# The same port as used by the server
-
-def main(args):
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.connect((HOST, PORT))
-	#s.send ("set_digital_out(2,True)" + "\n")
-	#time.sleep (1)
-
-	#s.send ("rq_reset(\"1\")" + "\n")
-	#time.sleep (1)
-
-	#s.send ("rq_activate_and_wait(\"1\")" + "\n")
-	#time.sleep (1)
-
-	var = 0
-	var = s.send ("rq_current_pos()" + "\n")
-	time.sleep(1)
-
-	#s.send ("rq_close_and_wait(\"1\")" + "\n")
-	#time.sleep (1)
-
-	#s.send ("popup(\"Messages\", title=\"The Headline in the Blue box\", blocking=True)" + "\n")
-	#time.sleep (1)
-
-	#s.send ("set_digital_out(2,False)" + "\n")
-	#time.sleep (1)
-
-	print var
-	data = s.recv(1024)
-	#print str(data)
-
-	print "Good bye!"
-'''

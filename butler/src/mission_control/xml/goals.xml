@@ -1,0 +1,22 @@
+<goals>
+	<goal name="Station1"> <!-- to get or to put object or just to drive to -->
+		<posx> 13.45	</posx>
+		<posy> 6.75 	</posy>
+		<rz>   75		</rz>
+		<UROrientation> left </UROrientation>
+	</goal>
+	<goal name="Station2">
+		<name> Station2 </name>
+		<posx> 12.43	</posx>
+		<posy> 16.75 	</posy>
+		<rz>   135		</rz>
+		<UROrientation> left </UROrientation>
+	</goal>
+	<goal name="Station3">
+		<name> Station3 </name>
+		<posx> 23.45	</posx>
+		<posy> 9.75 	</posy>
+		<rz>   175		</rz>
+		<UROrientation> left </UROrientation>
+	</goal>
+</goals>
