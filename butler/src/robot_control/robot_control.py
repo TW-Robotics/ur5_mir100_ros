@@ -20,29 +20,34 @@ def main(args):
 	gripper.open()
 
 	##### Move the MiR to the Search-Goal
-	print "Moving MiR to goal-position..."
-	mir.moveToGoal(13.35, 6.66, 0)
-	while mir.isAtGoal() == False:
-		rospy.sleep(1)
-	print "MiR is at goal-position"
+	#print "Moving MiR to goal-position..."
+	#mir.moveToGoal(13.35, 6.66, 0)
+	#while mir.isAtGoal() == False:
+#		rospy.sleep(1)
+	#print "MiR is at goal-position"
 
 	##### Searching for the object
 	# Move the UR5 to the search-pose
 	ur5.moveToSearchPose()
 
 	# As long as the searched object is not visible
+	i = 0
 	while imgProc.refresh_center_pos() == False:
 		print "Searching for object..."
-		ur5.searchObject()
+		ur5.searchObject(i)
+		i = i + 1
+		# TODO GOES INTO LOOP
 		print "Distance to object: " + str(ur5.distToObj)
 
 	##### Move the MiR to the Object
 	# Calculate world position with tfs
 	imgProc.refresh_center_pos()
-	goalPose =  mir.objToOrigin_pose
-	mir.moveToGoal(goalPose.position.x, goalPose.position.y, 0)	
+	rospy.rostime.wallsleep(0.5)
+	ur5.refresh()
+	#goalPose =  mir.objToOrigin_pose
+	#mir.moveToGoal(goalPose.position.x, goalPose.position.y, 0)	
 
-	zDist = 350-39
+	zDist = 350-200
 	##### Follow the found object
 	while True:
 		print "Found Cup... Following"

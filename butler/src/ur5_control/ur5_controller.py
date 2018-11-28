@@ -45,6 +45,8 @@ class ur5Controler(object):
 		self.acceleration = 0.1
 		self.speedScalingFactor = 0.05		# for timing of path-planning-points [very small eg 0.01, 1]
 
+		self.numSearch = 0
+
 		# Init moveit_commander
 		moveit_commander.roscpp_initialize(sys.argv)
 		self.robot = moveit_commander.RobotCommander()
@@ -59,12 +61,17 @@ class ur5Controler(object):
 		rospy.Subscriber("/tf_objToCam", Pose, self.camToObj_callback, queue_size=1)	# get transformation from object to cam for R4-Move
 		self.camToObj = Pose()
 		self.baseToObj = Pose()
+		rospy.sleep(1)
 
 	def camToObj_callback(self, data):
 		self.camToObj = data
 
 	def baseToObj_callback(self, data):
 		self.baseToObj = data
+
+	def refresh(self):
+		rospy.sleep(0.5)
+		return True
 
 	def addObject(self):
 		rospy.sleep(2)
@@ -109,7 +116,8 @@ class ur5Controler(object):
 		#jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
 		
 		jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
-		jointStates = [110*pi/180, -pi/2, pi/2, -120*pi/180, -pi/2, pi/2]
+		#jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] left
+		jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0]
 		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
@@ -120,14 +128,16 @@ class ur5Controler(object):
 
 		#while True:
 			#print "POS"
-			#print self.baseToObj.position
-			#print self.camToObj.position
+			print self.baseToObj.position
+			print self.camToObj.position
 			print "move joint 1"
 			act_jointStates = self.group.get_current_joint_values()
 			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
 			beta = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
 			a = math.sqrt(self.baseToObj.position.y**2 + self.baseToObj.position.x**2)
 			b = math.sqrt(self.camToObj.position.z**2 + self.camToObj.position.x**2)
+			print a
+			print beta
 			delta = math.asin(b/a * math.sin(pi/2 + beta))
 			print "correction deg: " + str(delta*180/pi)
 			print "goal: " + str((act_jointStates[0] - delta)*180/pi)
@@ -176,20 +186,25 @@ class ur5Controler(object):
 		goal_pose = current_pose
 
 		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
-		goal_pose.orientation.x = quats[0]
-		goal_pose.orientation.y = quats[1]
-		goal_pose.orientation.z = quats[2]
-		goal_pose.orientation.w = quats[3]
+		#goal_pose.orientation.x = quats[0]
+		#goal_pose.orientation.y = quats[1]
+		#goal_pose.orientation.z = quats[2]
+		#goal_pose.orientation.w = quats[3]
 		goal_pose.position.x = self.baseToObj.position.x
 		goal_pose.position.y = self.baseToObj.position.y
-		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
+		goal_pose.position.z = self.baseToObj.position.z #+ float(zDist) / 1000
+
+		print goal_pose
+		# TODO HERE IS SOMETHING WRONG
 
 		if not self.isReachable(goal_pose):
+			print "here"
 			return False
 
 		goal_pose.position.z = self.baseToObj.position.z
 
 		if not self.isReachable(goal_pose):
+			print "there"
 			return False
 		return True		
 
@@ -233,10 +248,17 @@ class ur5Controler(object):
 		goal_pose.position.z = goal_pose.position.z - 0.15
 		self.execute_move(goal_pose)
 
-	def searchObject(self):
+	def searchObject(self, num):
 		#while self.camToObj.position.x == 0 and self.camToObj.position.y == 0 and self.camToObj.position.z == 0:
 			#print self.camToObj
+		if num < 1:
 			self.move_joint(0, 25)
+		elif num == 2:
+			self.move_joint(3, 15)
+		elif num == 3:
+			self.move_joint(0, -25)
+		else:
+			print "No Object found!"
 
 	def correctPositionXY(self, x_goal, y_goal):
 		goal_pose = self.group.get_current_pose().pose
@@ -380,9 +402,9 @@ def main(args):
 		rospy.init_node('ur5Controler', anonymous=True)
 		ur5 = ur5Controler()
 
-		ur5.scene.remove_world_object()
-		ur5.attachEEF()
-		ur5.addObject()
+		#ur5.scene.remove_world_object()
+		#ur5.attachEEF()
+		#ur5.addObject()
 
 		'''goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707]
 		returnV = ur5.isReachable(goalPose)
@@ -393,8 +415,10 @@ def main(args):
 		print returnV
 		'''
 		ur5.moveToSearchPose()
-		ur5.searchObject()
+		ur5.searchObject(0)
+		ur5.searchObject(1)
 		ur5.followObject()
+		#ur5.followObject()
 
 		#rospy.spin()
 

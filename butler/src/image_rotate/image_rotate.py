@@ -44,7 +44,7 @@ class rossinator:
 		self.colorImgPub.publish(self.bridge.cv2_to_imgmsg(image,"bgr8"))
 
 	def depth_image_callback(self, data):
-		cv2.imshow("IMG", self.bridge.imgmsg_to_cv2(data, "32FC1"))
+		#cv2.imshow("IMG", self.bridge.imgmsg_to_cv2(data, "32FC1"))
 		#cv2.waitKey(1)
 		#rospy.rostime.wallsleep(0.1)
 		image = self.rotate_image(data, "32FC1")

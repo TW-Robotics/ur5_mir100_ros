@@ -77,6 +77,7 @@ class img_processing(object):
 		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
 		rospy.Subscriber("/tf_camToBase", Pose, self.camPose_callback, queue_size=1)		# Camera Position and Orientation (dependent on robot pose)
 
+		rospy.sleep(1)
 		#self.cup_size_middler = 0
 		#self.cup_size_middler_count = 0
 
