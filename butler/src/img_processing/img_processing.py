@@ -147,14 +147,36 @@ class img_processing(object):
 		self.coc.x = int(self.coc.x)
 		self.coc.y = int(self.coc.y)
 		self.obj_radius = int(self.obj_radius)
+
+		#print type(self.cv_depth_image)
+		#self.cv_depth_image = np.uint8(self.cv_depth_image)
 		# Set all pixels to 255, which are farer away then "threshold" (depends on robot pre-position)
 		# TODO: Write function which calculates best threshold by it's own with percent of white/black pixels 
-		cv2.threshold(self.cv_depth_image, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image)
+		#cv2.threshold(self.cv_depth_image, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image)
 		# Convert the image to uint8 to make it processible with other functions
-		self.cv_depth_image = np.uint8(self.cv_depth_image)
+		x = 0
+		y = 0
+		print len(self.cv_depth_image[0])
+		cv_depth_image = self.cv_depth_image
+		for x in range(0, 480-1):
+			for y in range(0, 640-1):
+				if cv_depth_image[x][y] > threshold:
+					cv_depth_image[x][y] = 255
+				else:
+					cv_depth_image[x][y] = 0
+
+		cv_depth_image = np.uint8(cv_depth_image)
 		# Blur the image to lose small regions which could be detected wrong
-		self.cv_depth_image = cv2.medianBlur(self.cv_depth_image, 5)
+		#self.cv_depth_image = cv2.medianBlur(self.cv_depth_image, 5)
 		
+		#while True:
+	#		print cv_depth_image
+	#		rospy.sleep(2)
+
+		while True:
+			cv2.imshow("CutOff", cv_depth_image)
+			cv2.waitKey(25)
+
 		# Find circles - currently not used
 		'''circles = cv2.HoughCircles(self.cv_depth_image,cv2.HOUGH_GRADIENT,1,30,
                             param1=50,param2=30,minRadius=20,maxRadius=0)
@@ -275,12 +297,12 @@ class img_processing(object):
 		cv2.line(rgb_image, (self.coc.x, self.coc.y), (poi.x, poi.y), (150,150,0))
 
 		# Display the images
-		#cv2.imshow("CutOff", self.cv_depth_image)
-		#cv2.waitKey(0)
+		cv2.imshow("CutOff", self.cv_depth_image)
+		cv2.waitKey(0)
 
 		#inp = raw_input("Press something for second image: ")[0]
-		cv2.imshow("Circles", rgb_image)
-		cv2.waitKey(1)
+		#cv2.imshow("Circles", rgb_image)
+		#cv2.waitKey(0)
 
 		inp = raw_input("point correct? y/n: ")[0]
 

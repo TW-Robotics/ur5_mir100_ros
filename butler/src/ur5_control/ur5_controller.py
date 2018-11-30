@@ -54,6 +54,9 @@ class ur5Controler(object):
 		self.group = moveit_commander.MoveGroupCommander(group_name)
 		self.scene = moveit_commander.PlanningSceneInterface()
 		self.group.set_end_effector_link("gripper")
+		self.group.set_pose_reference_frame("/base_footprint")
+		#self.group.set_pose_reference_frame("/world")
+		#print self.group.get_interface_description()
 
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
@@ -128,8 +131,8 @@ class ur5Controler(object):
 
 		#while True:
 			#print "POS"
-			print self.baseToObj.position
-			print self.camToObj.position
+			#print self.baseToObj.position
+			#print self.camToObj.position
 			print "move joint 1"
 			act_jointStates = self.group.get_current_joint_values()
 			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
@@ -157,7 +160,7 @@ class ur5Controler(object):
 			self.execute_move(goal_jointStates)
 
 			self.distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
-			print "Distance to obj: " + str(self.distToObj)
+			#print "Distance to obj: " + str(self.distToObj)
 
 			#if self.distToObj <= 0.8:
 				#print "Distance to obj: " + str(self.distToObj)
@@ -186,15 +189,17 @@ class ur5Controler(object):
 		goal_pose = current_pose
 
 		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
-		#goal_pose.orientation.x = quats[0]
-		#goal_pose.orientation.y = quats[1]
-		#goal_pose.orientation.z = quats[2]
-		#goal_pose.orientation.w = quats[3]
+		goal_pose.orientation.x = quats[0]
+		goal_pose.orientation.y = quats[1]
+		goal_pose.orientation.z = quats[2]
+		goal_pose.orientation.w = quats[3]
 		goal_pose.position.x = self.baseToObj.position.x
 		goal_pose.position.y = self.baseToObj.position.y
-		goal_pose.position.z = self.baseToObj.position.z #+ float(zDist) / 1000
+		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
 
+		print current_pose
 		print goal_pose
+		print self.baseToObj
 		# TODO HERE IS SOMETHING WRONG
 
 		if not self.isReachable(goal_pose):
@@ -225,7 +230,7 @@ class ur5Controler(object):
 		goal_pose.orientation.w = quats[3]
 		goal_pose.position.x = self.baseToObj.position.x
 		goal_pose.position.y = self.baseToObj.position.y
-		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
+		goal_pose.position.z = 0.72 + 0.3#self.baseToObj.position.z + float(zDist) / 1000
 
 		self.execute_move(goal_pose)
 		#self.move_joint_to_target(5, pi/2)
@@ -414,10 +419,13 @@ def main(args):
 		returnV = ur5.isReachable(goalPose)
 		print returnV
 		'''
-		ur5.moveToSearchPose()
-		ur5.searchObject(0)
-		ur5.searchObject(1)
-		ur5.followObject()
+		print ur5.group.get_current_pose().pose
+		print ur5.group.get_pose_reference_frame()
+		print ur5.robot.get_planning_frame()
+		#ur5.moveToSearchPose()
+		#ur5.searchObject(0)
+		#ur5.searchObject(1)
+		#ur5.followObject()
 		#ur5.followObject()
 
 		#rospy.spin()
@@ -430,13 +438,13 @@ def main(args):
 		# Move to up-Position
 		'''print "Moving home"
 		ur5.go_home()
-		
+		'''
 		# Move to pose
 		# Info: Get actual pose: rosrun tf tf_echo base_link tool0
 		print "Moving to pose"
 		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
 		ur5.move_to_pose(goalPose)
-
+		'''
 		# Move to x/y/z-position (incremental)
 		print "Moving xyz-incremental"
 		x_inc = 0
