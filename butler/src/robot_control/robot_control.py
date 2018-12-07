@@ -19,7 +19,7 @@ def main(args):
 	while True:
 		print "Searching for handle..."
 		imgProc.refresh_center_pos()
-		state = imgProc.find_handle(250)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
+		state = imgProc.find_handle(250+120)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
 		if state == True:
 			break
 	print "Found grabbing Position"
@@ -57,7 +57,7 @@ def main(args):
 	#goalPose =  mir.objToOrigin_pose
 	#mir.moveToGoal(goalPose.position.x, goalPose.position.y, 0)	
 
-	zDist = 250 - 41
+	zDist = 250 - 41 + 260
 	##### Follow the found object
 	while True:
 		print "Found Cup... Following"
@@ -88,7 +88,7 @@ def main(args):
 	while True:
 		print "Searching for handle..."
 		imgProc.refresh_center_pos()
-		state = imgProc.find_handle(300)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
+		state = imgProc.find_handle(250+120+180-40)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
 		if state == True:
 			break
 	print "Found grabbing Position"
