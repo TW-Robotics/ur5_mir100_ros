@@ -26,8 +26,9 @@ def main(args):
 	return 1'''
 
 	##### Make sure the gripper is open
-	print "Calibrating gripper..."
-	gripper.open()
+	#print "Calibrating gripper..."
+	#gripper.open()
+	#TODO WAIT?
 
 	##### Move the MiR to the Search-Goal
 	#print "Moving MiR to goal-position..."
@@ -81,7 +82,7 @@ def main(args):
 	rospy.sleep(1)
 	print imgProc.obj_center_pos.x
 	print imgProc.obj_center_pos.y
-	ur5.correctPositionXY(imgProc.obj_center_pos.y, imgProc.obj_center_pos.x)
+	#ur5.correctPositionXY(imgProc.obj_center_pos.y, imgProc.obj_center_pos.x)
 	
 	##### Locating the handle of the cup
 	print "Analyse depth-image"

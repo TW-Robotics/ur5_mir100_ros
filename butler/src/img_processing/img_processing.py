@@ -92,6 +92,7 @@ class img_processing(object):
 		pubPose.orientation.z = rxyzw[2]
 		pubPose.orientation.w = rxyzw[3]
 		#print pubPose
+		#print "Called"
 		self.object_pos_pub.publish(pubPose)
 
 	# Get the pose of the camera dependent on the robot pose
@@ -318,10 +319,10 @@ class img_processing(object):
 			grabPoint.z = self.coc.z
 
 		if grabPoint.z != 0 and inp == 'y':
-			#print grabPoint
+			print grabPoint
 			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
 			#print self.coc
-			#print grabPoint
+			print grabPoint
 			self.pub_object_pose(grabPoint, quats)
 			print "Grab-Point z: " + str(grabPoint.z)
 			return True
@@ -337,7 +338,7 @@ class img_processing(object):
 		for outer_box in self.currentBoundingBoxes.bounding_boxes:
 			if outer_box.Class == self.outerClass or self.onlyOneClass == True:
 				for inner_box in self.currentBoundingBoxes.bounding_boxes:
-					if inner_box.Class == self.innerClass and self.box_is_in_box(outer_box, inner_box):
+					if (inner_box.Class == self.innerClass or inner_box.Class == "bowl") and self.box_is_in_box(outer_box, inner_box):
 						center_x = inner_box.xmin+(inner_box.xmax-inner_box.xmin)/2
 						center_y = inner_box.ymin+(inner_box.ymax-inner_box.ymin)/2
 						depth = self.depth_array[center_y][center_x]*depth_scale_factor

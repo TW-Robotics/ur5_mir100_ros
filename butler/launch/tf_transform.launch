@@ -2,7 +2,7 @@
 	<!-- Static transforms for camera_link, camera_frame and gripper -->
 	<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.030 0 0.055 -0.5 0.5 -0.5 0.5 ee_link camera_link 100" />
 	<!-- 100ms = 10Hz-->
-	<node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="0 0.015 0 -0.010 0.001 0.001 1 camera_link camera_aligned_depth_to_color_frame 100" />
+	<node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="0.025 -0.01 0 -0.010 0.001 0.001 1 camera_link camera_aligned_depth_to_color_frame 100" />
 	<node pkg="tf" type="static_transform_publisher" name="gripper_tool0_publisher" args="0.144 0 0 -0.5 0.5 -0.5 0.5 ee_link gripper 100" />
 	
 	<!-- Nodes for broadcasting and listening to tf-transforms -->

@@ -249,6 +249,7 @@ class ur5Controler(object):
 		#self.move_joint_to_target(5, alpha + actStates[5])
 		rospy.sleep(0.5)
 		goal_pose = self.baseToObj
+		rospy.sleep(0.5)
 		goal_pose.position.z = goal_pose.position.z + 0.15
 		self.execute_move(goal_pose)
 		goal_pose.position.z = goal_pose.position.z - 0.15
