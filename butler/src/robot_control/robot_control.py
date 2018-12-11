@@ -1,8 +1,9 @@
 import rospy
 import sys
 from ur5_control import ur5_controller
-from img_processing import img_processing
-from  gripper_control import gripper_control
+from img_processing import obj_localization
+#from img_processing import img_processing
+from gripper_control import gripper_control
 from mir_control import mir_control
 #import mir_control.mir_control as mir
 
@@ -11,7 +12,8 @@ def main(args):
 	rospy.init_node('robotControl', anonymous=True)
 
 	ur5 = ur5_controller.ur5Controler()
-	imgProc = img_processing.img_processing()
+	#imgProc = img_processing.img_processing()
+	imgProc = obj_localization.img_processing("cup")
 	mir = mir_control.mirControler()
 	gripper = gripper_control.gripper()
 
