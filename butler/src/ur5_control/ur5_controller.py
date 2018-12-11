@@ -215,7 +215,9 @@ class ur5Controler(object):
 
 	def moveOverObject(self, zDist):
 		#goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
+		rospy.sleep(0.5)
 		current_pose = self.group.get_current_pose().pose
+		rospy.sleep(0.5)
 		goal_pose = geometry_msgs.msg.Pose()
 		#goal_pose = current_pose
 		#goal_pose.orientation.x = 0.5
