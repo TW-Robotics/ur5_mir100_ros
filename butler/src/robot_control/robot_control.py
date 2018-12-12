@@ -17,6 +17,10 @@ def main(args):
 	mir = mir_control.mirControler()
 	gripper = gripper_control.gripper()
 
+	#while True:
+	#	imgProc.refresh_center_pos() 
+	#	rospy.rostime.wallsleep(1)
+
 	'''print "Analyse depth-image"
 	while True:
 		print "Searching for handle..."
@@ -60,7 +64,7 @@ def main(args):
 	#goalPose =  mir.objToOrigin_pose
 	#mir.moveToGoal(goalPose.position.x, goalPose.position.y, 0)	
 
-	zDist = 250 - 41 + 260
+	zDist = 419
 	##### Follow the found object
 	while True:
 		print "Found Cup... Following"
@@ -84,14 +88,14 @@ def main(args):
 	rospy.sleep(1)
 	#print imgProc.obj_center_pos.x
 	#print imgProc.obj_center_pos.y
-	#ur5.correctPositionXY(imgProc.obj_center_pos.y, imgProc.obj_center_pos.x)
+	ur5.correctPositionXY(-imgProc.objCenterM.y, -imgProc.objCenterM.x)
 	
 	##### Locating the handle of the cup
 	print "Analyse depth-image"
 	while True:
 		print "Searching for handle..."
 		imgProc.refresh_center_pos()
-		state = imgProc.find_handle(250+120+180-40+20+20)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
+		state = imgProc.find_handle(500)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
 		if state == True:
 			break
 	print "Found grabbing Position"

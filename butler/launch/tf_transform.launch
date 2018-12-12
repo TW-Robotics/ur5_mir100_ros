@@ -1,10 +1,15 @@
 <launch>
 	<!-- Static transforms for camera_link, camera_frame and gripper -->
-	<!--<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.030 0 0.055 -0.5 0.5 -0.5 0.5 ee_link camera_link 100" />-->
-	<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.030 0 0.055 0.506 -0.495 0.504 -0.495 ee_link camera_link 100" />
+	<!-- ORIGINAL <node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.030 0 0.055 -0.5 0.5 -0.5 0.5 ee_link camera_link 100" />-->
+	<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.030 0 0.055 0 0 0 1 ee_link camera_link 100" />
+	<!-- LAUT REALSENSE ROS<node pkg="tf" type="static_transform_publisher" name="camera_eeLink_publisher" args="0.030 0 0.055 0.506 -0.495 0.504 -0.495 ee_link camera_link 100" />-->
 	<!-- 100ms = 10Hz-->
 	<!--<node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="-0.007 -0.015 0 -0.010 0.001 0.001 1 camera_link camera_aligned_depth_to_color_frame 100" />-->
-	<node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="-0.007 -0.015 0 0.026 0 0 1 camera_link camera_aligned_depth_to_color_frame 100" />
+		<!-- VALID FOR X/ROTY <node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="-0.060 -0.015 -0.03 0 -0.015 0 1 camera_link camera_aligned_depth_to_color_frame 100" /> -->
+
+	<!-- VALIOD FOR BOTH BUT NOT WORKING <node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="-0.060 -0.025 -0.03 0.02 -0.015 0 1 camera_link camera_aligned_depth_to_color_frame 100" />-->
+	<!-- WORKS LITTLE BIT <node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="-0.040 -0.015 -0.02 0 0 0 1 camera_link camera_aligned_depth_to_color_frame 100" />-->
+	<node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="-0.02 -0.03 0.005 0.506 -0.495 0.504 -0.495 camera_link camera_aligned_depth_to_color_frame 100" />
 	<!--<node pkg="tf" type="static_transform_publisher" name="camera_depthCamera_publisher" args="-0.007 -0.015 -0.02 -0.044 0 0 0.999 camera_link camera_aligned_depth_to_color_frame 100" />-->
 	<node pkg="tf" type="static_transform_publisher" name="gripper_tool0_publisher" args="0.144 0 0 -0.5 0.5 -0.5 0.5 ee_link gripper 100" />
 	
