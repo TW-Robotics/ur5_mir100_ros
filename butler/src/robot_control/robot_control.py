@@ -82,8 +82,8 @@ def main(args):
 	print "Correcting Position"
 	imgProc.refresh_center_pos()
 	rospy.sleep(1)
-	print imgProc.obj_center_pos.x
-	print imgProc.obj_center_pos.y
+	#print imgProc.obj_center_pos.x
+	#print imgProc.obj_center_pos.y
 	#ur5.correctPositionXY(imgProc.obj_center_pos.y, imgProc.obj_center_pos.x)
 	
 	##### Locating the handle of the cup
@@ -91,7 +91,7 @@ def main(args):
 	while True:
 		print "Searching for handle..."
 		imgProc.refresh_center_pos()
-		state = imgProc.find_handle(250+120+180-40)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
+		state = imgProc.find_handle(250+120+180-40+20+20)	# Camera is about 50mm in front of TCP - TODO: Change when TCP changes
 		if state == True:
 			break
 	print "Found grabbing Position"

@@ -40,6 +40,7 @@
   <!-- Connection MiR to planning frame world where UR is connected -->
   <joint name="compJoint" type="fixed">
     <origin xyz="0.153 -0.0325 0.892" rpy="0 0 0" /> <!-- Caluculations: from base_footprint to surface 0.153 = 0.038 + 0.115; - ; 0.892 = 0.352 + 0.54-->
+    <!--<origin xyz="0.093 -0.0125 0.892" rpy="0 0 0" />-->
     <parent link="base_link" />
     <child link="world" />
   </joint>

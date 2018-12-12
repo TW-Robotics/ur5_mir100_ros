@@ -74,7 +74,7 @@ def main(args):
 			# Render images
 			depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
 			images = np.hstack((color_image, depth_colormap))
-			cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
+			#cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
 			#cv2.imshow('Align Example', images)
 			#cv2.waitKey(1)
 	
@@ -110,7 +110,7 @@ def pub_msgs(h, color_img, depth_img):
 def make_camera_msg(h):
 	camera_info_msg = CameraInfo()
 	fx, fy = 616.741455078125, 616.919677734375
-	cx, cy = 324.817626953125, 238.0455780029297
+	cx, cy = 387.7503356933594, 241.0522918701172
 	camera_info_msg.header = h
 	camera_info_msg.header.frame_id = "camera_color_optical_frame"
 	camera_info_msg.distortion_model ="plumb_bob"
@@ -124,6 +124,24 @@ def make_camera_msg(h):
 	camera_info_msg.P = [fx, 0, cx, 0,
 						 0, fy, cy, 0,
 						 0, 0, 1, 0]
+
+	'''camera_info_msg = CameraInfo()
+	fx, fy = 387.75033569335945, 320.2814636230469
+	cx, cy = 324.817626953125, 238.0455780029297
+	camera_info_msg.header = h
+	camera_info_msg.header.frame_id = "camera_depth_optical_frame"
+	camera_info_msg.distortion_model ="plumb_bob"
+	camera_info_msg.width = width
+	camera_info_msg.height = height
+	camera_info_msg.R = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+	camera_info_msg.K = [fx, 0, cx, 
+						 0, fy, cy,
+						 0, 0, 1]
+	camera_info_msg.D = [0, 0, 0, 0, 0]
+	camera_info_msg.P = [fx, 0, cx, 0,
+						 0, fy, cy, 0,
+						 0, 0, 1, 0]'''
+
 	return camera_info_msg
 	
 # BILD CONVERTIEREN MIT CV2_BRIDGE?

@@ -51,6 +51,7 @@ def main(args):
 			print "test"
 			print trans3
 		#except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+		#	rospy.loginfo("Warning!")
 		#	continue
 			rate.sleep()
 

@@ -119,8 +119,8 @@ class ur5Controler(object):
 		#jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
 		
 		jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
-		#jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] left
-		jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0]
+		jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #left
+		#jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #right
 		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
@@ -186,6 +186,9 @@ class ur5Controler(object):
 
 	def isGoalReachable(self, zDist):
 		current_pose = self.group.get_current_pose().pose
+
+		print current_pose
+
 		goal_pose = current_pose
 
 		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
@@ -197,10 +200,11 @@ class ur5Controler(object):
 		goal_pose.position.y = self.baseToObj.position.y
 		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
 
-		print current_pose
 		print goal_pose
 		print self.baseToObj
-		# TODO HERE IS SOMETHING WRONG
+
+		#print self.group.get_pose_reference_frame()
+		#print self.robot.get_planning_frame()
 
 		if not self.isReachable(goal_pose):
 			print "here"
