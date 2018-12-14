@@ -7,6 +7,7 @@ import tf
 import geometry_msgs.msg
 from geometry_msgs.msg import Pose
 import sys
+from math import pi
 
 # Convert lists to pose-obect so only 1 object has to be published
 def listToPose(trans, rot):
@@ -18,6 +19,18 @@ def listToPose(trans, rot):
 	pose.orientation.y = rot[1]
 	pose.orientation.z = rot[2]
 	pose.orientation.w = rot[3]
+	return pose
+
+def listToPose1(trans, rot):
+	quats = tf.transformations.quaternion_from_euler(0, 0, rot[2]*pi/180, 'rxyz')
+	pose = geometry_msgs.msg.Pose()
+	pose.position.x = trans[0]
+	pose.position.y = trans[1]
+	pose.position.z = trans[2]
+	pose.orientation.x = quats[0]
+	pose.orientation.y = quats[1]
+	pose.orientation.z = quats[2]
+	pose.orientation.w = quats[3]
 	return pose
 
 def main(args):

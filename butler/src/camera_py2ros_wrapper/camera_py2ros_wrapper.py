@@ -51,6 +51,10 @@ def main(args):
 		while True:
 			# Get frameset of color and depth
 			frames = pipeline.wait_for_frames()
+			#profile = pipeline.get_active_profile()
+			color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
+			color_intrinsics = color_profile.get_intrinsics()
+			#print color_intrinsics
 			# frames.get_depth_frame() is a 640x360 depth image
 			
 			# Align the depth frame to color frame
@@ -110,7 +114,8 @@ def pub_msgs(h, color_img, depth_img):
 def make_camera_msg(h):
 	camera_info_msg = CameraInfo()
 	fx, fy = 616.741455078125, 616.919677734375
-	cx, cy = 387.7503356933594, 241.0522918701172
+	cx, cy = 324.818, 238.046
+	#cx, cy = 387.7503356933594, 241.0522918701172
 	camera_info_msg.header = h
 	camera_info_msg.header.frame_id = "camera_color_optical_frame"
 	camera_info_msg.distortion_model ="plumb_bob"

@@ -119,8 +119,8 @@ class ur5Controler(object):
 		#jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
 		
 		jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
-		jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #left
-		#jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #right
+		#jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #left
+		jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #right
 		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
 		self.execute_move(jointStates)
@@ -258,7 +258,7 @@ class ur5Controler(object):
 		rospy.sleep(0.5)
 		goal_pose.position.z = goal_pose.position.z + 0.15
 		self.execute_move(goal_pose)
-		goal_pose.position.z = goal_pose.position.z - 0.15
+		goal_pose.position.z = goal_pose.position.z - 0.17 #TODO changed so it drives more down
 		self.execute_move(goal_pose)
 
 	def searchObject(self, num):

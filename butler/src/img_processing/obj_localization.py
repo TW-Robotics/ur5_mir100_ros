@@ -70,6 +70,8 @@ class img_processing():
 	# Publish Pose of object
 	def pub_object_pose(self, xyz, rxyzw):
 		pubPose = Pose()
+		#pubPose.position.x = -float(xyz.y) / 1000
+		#pubPose.position.y = float(xyz.x) / 1000
 		pubPose.position.x = float(xyz.x) / 1000
 		pubPose.position.y = float(xyz.y) / 1000
 		pubPose.position.z = float(xyz.z) / 1000
@@ -121,7 +123,7 @@ class img_processing():
 	def locateObject(self):
 		# Check for object in found objects
 		for bounding_box in self.currentBoundingBoxes.bounding_boxes:
-			if (bounding_box.Class == self.objectClass or bounding_box.Class == "bowl"): #TODO delete bowl
+			if (bounding_box.Class == self.objectClass or bounding_box.Class == "bowl" or bounding_box.Class == "bottle"): #TODO delete bowl
 				self.objCenterPX.x = bounding_box.xmin + (bounding_box.xmax - bounding_box.xmin)/2
 				self.objCenterPX.y = bounding_box.ymin + (bounding_box.ymax - bounding_box.ymin)/2
 				self.objCenterPX.z = self.depth_array[self.objCenterPX.y][self.objCenterPX.x]
@@ -279,7 +281,7 @@ class img_processing():
 				alpha = pi + alpha
 				print "Corrected to " + str(alpha*180/pi)
 
-			quats = tf.transformations.quaternion_from_euler(alpha-pi/2, -pi/2, pi/2, 'rzyx')
+			quats = tf.transformations.quaternion_from_euler(alpha+pi, -pi/2, pi/2, 'rzyx')
 			self.alpha = alpha
 
 			# Draw grab-point
@@ -322,6 +324,7 @@ class img_processing():
 			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
 			self.pub_object_pose(grabPoint, quats)
 			print grabPoint
+			cv2.destroyAllWindows()
 			return True
 		print "No depht-value, trying again"
 		return False
