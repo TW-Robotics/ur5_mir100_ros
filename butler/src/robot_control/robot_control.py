@@ -114,6 +114,10 @@ def main(args):
 		print "Error grasping object!"
 		return False
 
+	ur5.move_xyz(0, 0, 0.1)
+	rospy.sleep(5)
+	ur5.move_xyz(0, 0, -0.1)
+
 	gripper.open()
 	rospy.sleep(5)
 	return True

@@ -194,14 +194,18 @@ class img_processing():
 		# TODO: Do it with threshold
 		for x in range(0, 480-1):
 			for y in range(0, 640-1):
-				if cv_depth_image[x][y] > threshold:
+				if cv_depth_image[x][y] > threshold or x >= 450:
 					cv_depth_image[x][y] = 255
 				else:
 					cv_depth_image[x][y] = 0
 		cv_depth_image = np.uint8(cv_depth_image)
 		
+		#while True:
+		#	cv2.imshow("Grab-Point", cv_depth_image)
+		#	cv2.waitKey(1)
+
 		# Blur the image to lose small regions which could be detected wrong
-		#self.cv_depth_image = cv2.medianBlur(self.cv_depth_image, 5)
+		cv_depth_image = cv2.medianBlur(cv_depth_image, 5)
 		
 		#while True:
 			#print cv_depth_image
