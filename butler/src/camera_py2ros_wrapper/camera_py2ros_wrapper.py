@@ -29,6 +29,11 @@ config.enable_stream(rs.stream.color, width, height, rs.format.bgr8, 30)
 # Start streaming
 profile = pipeline.start(config)
 
+# Declare pointcloud object, for calculating pointclouds and texture mappings
+pc = rs.pointcloud()
+# We want the points object to be persistent so we can display the last cloud when a frame drops
+points = rs.points()
+
 def main(args):
 	rospy.init_node("Camera_Python_Wrapper")
 	h = Header()
@@ -67,6 +72,16 @@ def main(args):
 			# Validate that both frames are valid
 			if not aligned_depth_frame or not color_frame:
 				continue
+				
+			# Fetch color and depth frames
+   			depth = frames.get_depth_frame()
+   			color = frames.get_color_frame()
+			
+			# Tell pointcloud object to map to this color frame
+			pc.map_to(color)
+		
+		   	# Generate the pointcloud and texture mappings
+			points = pc.calculate(depth)
 			
 			depth_image = np.asanyarray(aligned_depth_frame.get_data())
 			color_image = np.asanyarray(color_frame.get_data())
