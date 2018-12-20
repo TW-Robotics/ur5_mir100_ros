@@ -31,6 +31,7 @@ from math import pi
 
 # Set True to make the program ask before the robot moves
 checkBeforeDo = True
+debug = False
 
 # Class to control and move the ur5-robot
 class ur5Controler(object):
@@ -45,7 +46,9 @@ class ur5Controler(object):
 		self.acceleration = 0.1
 		self.speedScalingFactor = 0.05		# for timing of path-planning-points [very small eg 0.01, 1]
 
-		self.numSearch = 0
+		# Init variables
+		self.camToObj = Pose()
+		self.baseToObj = Pose()
 
 		# Init moveit_commander
 		moveit_commander.roscpp_initialize(sys.argv)
@@ -55,15 +58,13 @@ class ur5Controler(object):
 		self.scene = moveit_commander.PlanningSceneInterface()
 		self.group.set_end_effector_link("gripper")
 		self.group.set_pose_reference_frame("/base_footprint")
-		#self.group.set_pose_reference_frame("/world")
-		#print self.group.get_interface_description()
 
 		# Publisher for Robot-Trajectory
 		self.trajectory_pub = rospy.Publisher('/move_group/planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
 		rospy.Subscriber("/tf_objToBase", Pose, self.baseToObj_callback, queue_size=1)	# get transformation from object to base for R1-Move
 		rospy.Subscriber("/tf_objToCam", Pose, self.camToObj_callback, queue_size=1)	# get transformation from object to cam for R4-Move
-		self.camToObj = Pose()
-		self.baseToObj = Pose()
+
+		# Wait for init
 		rospy.sleep(1)
 
 	def camToObj_callback(self, data):
@@ -114,65 +115,67 @@ class ur5Controler(object):
 		#self.scene.attach_mesh(eef_link, "cam")
 		self.scene.attach_mesh(eef_link, "eef")
 
-	def moveToSearchPose(self):
+	def moveToSearchPose(self, orientation):
 		# drive to position where r = 0.4 and h = 0.6
-		#jointStates = [-0.0258, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6 R1: -0.258
 		
-		jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
-		#jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #left
-		jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #right
+		#jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
 		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
 		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
+
+		# TODO make more beautiful
+		if orientation == "left":
+			jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #left
+		elif orientation == "right":
+			jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #right
+
 		self.execute_move(jointStates)
 
 	def followObject(self):
-		#self.moveToSearchPose()
-		#rospy.sleep(5)
+		#print self.baseToObj.position
+		#print self.camToObj.position
 
-		#while True:
-			#print "POS"
-			#print self.baseToObj.position
-			#print self.camToObj.position
-			print "move joint 1"
-			act_jointStates = self.group.get_current_joint_values()
-			theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
-			beta = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
-			a = math.sqrt(self.baseToObj.position.y**2 + self.baseToObj.position.x**2)
-			b = math.sqrt(self.camToObj.position.z**2 + self.camToObj.position.x**2)
-			print a
-			print beta
-			delta = math.asin(b/a * math.sin(pi/2 + beta))
+		# Joint 1
+		#print "move joint 1"
+		act_jointStates = self.group.get_current_joint_values()
+		theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
+		beta = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
+		a = math.sqrt(self.baseToObj.position.y**2 + self.baseToObj.position.x**2)
+		b = math.sqrt(self.camToObj.position.z**2 + self.camToObj.position.x**2)
+		#print a
+		#print beta
+		delta = math.asin(b/a * math.sin(pi/2 + beta))
+		if debug == True:
 			print "correction deg: " + str(delta*180/pi)
 			print "goal: " + str((act_jointStates[0] - delta)*180/pi)
-			#self.move_joint_to_target(0, act_jointStates[0] - delta)
+		#self.move_joint_to_target(0, act_jointStates[0] - delta)
 
-			print "move joint 4"
-			act_jointStates = self.group.get_current_joint_values()
-			phi = math.atan2(self.camToObj.position.z, self.camToObj.position.y)
+		# Joint 4
+		#print "move joint 4"
+		act_jointStates = self.group.get_current_joint_values()
+		phi = math.atan2(self.camToObj.position.z, self.camToObj.position.y)
+		if debug == True:
 			print "correction deg: " + str((pi/2-phi)*180/pi)
 			print "goal: " + str((act_jointStates[3] + (pi/2 - phi))*180/pi)
-			#self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
+		#self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
 
-			# Move joints simulatenously
-			goal_jointStates = act_jointStates
-			goal_jointStates[0] = act_jointStates[0] - delta
-			goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
-			self.execute_move(goal_jointStates)
+		# Move joints simulatenously
+		goal_jointStates = act_jointStates
+		goal_jointStates[0] = act_jointStates[0] - delta
+		goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
+		self.execute_move(goal_jointStates)
 
-			self.distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
-			#print "Distance to obj: " + str(self.distToObj)
+		self.distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
+		#print "Distance to obj: " + str(self.distToObj)
 
-			#if self.distToObj <= 0.8:
-				#print "Distance to obj: " + str(self.distToObj)
-			#	self.moveOverObject()
+		# Joint 5
+		'''print "move joint 5"
+		act_jointStates = self.group.get_current_joint_values()
+		gamma = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
+		print "correction deg: " + str((pi/2-gamma)*180/pi)
+		print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
+		self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
+		'''
 
-			'''print "move joint 5"
-			act_jointStates = self.group.get_current_joint_values()
-			gamma = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
-			print "correction deg: " + str((pi/2-gamma)*180/pi)
-			print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
-			self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
-			'''
 	def isReachable(self, goalPose):
 		oldTime = self.group.get_planning_time()
 		self.group.set_planning_time(0.5)
@@ -186,9 +189,6 @@ class ur5Controler(object):
 
 	def isGoalReachable(self, zDist):
 		current_pose = self.group.get_current_pose().pose
-
-		print current_pose
-
 		goal_pose = current_pose
 
 		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
@@ -200,34 +200,17 @@ class ur5Controler(object):
 		goal_pose.position.y = self.baseToObj.position.y
 		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
 
-		print goal_pose
-		print self.baseToObj
-
-		#print self.group.get_pose_reference_frame()
-		#print self.robot.get_planning_frame()
-
 		if not self.isReachable(goal_pose):
-			print "here"
 			return False
 
 		goal_pose.position.z = self.baseToObj.position.z
 
 		if not self.isReachable(goal_pose):
-			print "there"
 			return False
 		return True		
 
 	def moveOverObject(self, zDist):
-		#goal_pose = self.baseToObj 		# Stores pose of object relative to robot frame
-		rospy.sleep(0.5)
-		current_pose = self.group.get_current_pose().pose
-		rospy.sleep(0.5)
 		goal_pose = geometry_msgs.msg.Pose()
-		#goal_pose = current_pose
-		#goal_pose.orientation.x = 0.5
-		#goal_pose.orientation.y = 0.5
-		#goal_pose.orientation.z = -0.5
-		#goal_pose.orientation.w = 0.5
 
 		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
 		goal_pose.orientation.x = quats[0]
@@ -239,39 +222,25 @@ class ur5Controler(object):
 		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
 
 		self.execute_move(goal_pose)
-		#self.move_joint_to_target(5, pi/2)
 
 	def moveToGrabbingPose(self, alpha):
-		#goal_pose = self.baseToObj
-		#goal_pose.position.x = self.group.get_current_pose().pose.position.x
-		#goal_pose.position.y = self.group.get_current_pose().pose.position.y
-		#goal_pose.position.z = self.group.get_current_pose().pose.position.z
-		#self.execute_move(goal_pose)
-		
-		#actStates = self.group.get_current_joint_values()
-		#print actStates[5]
-		#print alpha
-		#print "move to " + str(alpha - actStates[5])
-		#self.move_joint_to_target(5, alpha + actStates[5])
-		rospy.sleep(0.5)
 		goal_pose = self.baseToObj
-		rospy.sleep(0.5)
 		goal_pose.position.z = goal_pose.position.z + 0.15
 		self.execute_move(goal_pose)
-		goal_pose.position.z = goal_pose.position.z - 0.17 #TODO changed so it drives more down
+		goal_pose.position.z = goal_pose.position.z - 0.16 #TODO changed so it drives more down
 		self.execute_move(goal_pose)
 
 	def searchObject(self, num):
-		#while self.camToObj.position.x == 0 and self.camToObj.position.y == 0 and self.camToObj.position.z == 0:
-			#print self.camToObj
-		if num < 1:
+		# TODO make more beautiful
+		if num == 0:
 			self.move_joint(0, 25)
-		elif num == 2:
+		elif num == 1:
 			self.move_joint(3, 15)
-		elif num == 3:
+		elif num == 2:
 			self.move_joint(0, -25)
 		else:
-			print "No Object found!"
+			return False
+		return True
 
 	def correctPositionXY(self, x_goal, y_goal):
 		goal_pose = self.group.get_current_pose().pose
@@ -389,19 +358,20 @@ class ur5Controler(object):
 	def confirmation(self, goal):
 		inp = ""
 		if (checkBeforeDo):
-			if type(goal) != RobotTrajectory:
-				print " *************************************** Current ***"
-				if type(goal) is Pose:
-					print self.group.get_current_pose().pose
-				else:
-					print self.group.get_current_joint_values()
-				print " *************************************** Goal ***"
-				print goal
+			if debug == True:
+				if type(goal) != RobotTrajectory:
+					print " *************************************** Current ***"
+					if type(goal) is Pose:
+						print self.group.get_current_pose().pose
+					else:
+						print self.group.get_current_joint_values()
+					print " *************************************** Goal ***"
+					print goal
 			inp = raw_input("Move robot? y/n: ")[0]
 		if (inp == 'y' or checkBeforeDo == False):
 			print "Moving robot..."
 			return True
-		print "Aborted"
+		print "Aborted by user."
 		return False
 
 	# Define Speed and acceleration
@@ -427,9 +397,9 @@ def main(args):
 		returnV = ur5.isReachable(goalPose)
 		print returnV
 		'''
-		print ur5.group.get_current_pose().pose
-		print ur5.group.get_pose_reference_frame()
-		print ur5.robot.get_planning_frame()
+		#print ur5.group.get_current_pose().pose
+		#print ur5.group.get_pose_reference_frame()
+		#print ur5.robot.get_planning_frame()
 		#ur5.moveToSearchPose()
 		#ur5.searchObject(0)
 		#ur5.searchObject(1)
@@ -449,9 +419,9 @@ def main(args):
 		'''
 		# Move to pose
 		# Info: Get actual pose: rosrun tf tf_echo base_link tool0
-		print "Moving to pose"
-		goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
-		ur5.move_to_pose(goalPose)
+		#print "Moving to pose"
+		#goalPose = [0, 0.191, 0.937, 0.707, 0, 0, 0.707] # Point x, y, z in Meter; Orientation x, y, z, w in Quaternionen
+		#ur5.move_to_pose(goalPose)
 		'''
 		# Move to x/y/z-position (incremental)
 		print "Moving xyz-incremental"

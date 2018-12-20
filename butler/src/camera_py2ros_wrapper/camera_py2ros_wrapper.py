@@ -17,6 +17,8 @@ depthImg_pub = rospy.Publisher("/camera/aligned_depth_to_color/image_raw", Image
 
 width, height = 640, 480
 
+camera_intrinsics = 0
+
 # Create a pipeline
 pipeline = rs.pipeline()
 
@@ -36,13 +38,16 @@ points = rs.points()
 
 def main(args):
 	rospy.init_node("Camera_Python_Wrapper")
+
+	global camera_intrinsics
+
 	h = Header()
 	h.stamp = rospy.Time.now() # Note you need to call rospy.init_node() before this will work
 	
 	# Getting the depth sensor's depth scale (see rs-align example for explanation)
 	depth_sensor = profile.get_device().first_depth_sensor()
 	depth_scale = depth_sensor.get_depth_scale()
-	print depth_scale
+	#print depth_scale
 
 	# Create an align object
 	# rs.align allows us to perform alignment of depth frames to others frames
@@ -50,17 +55,19 @@ def main(args):
 	align_to = rs.stream.color
 	align = rs.align(align_to)
 
+	#profile = pipeline.get_active_profile()
+	color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
+	camera_intrinsics = color_profile.get_intrinsics()
+	#print color_intrinsics.ppx
+	# frames.get_depth_frame() is a 640x360 depth image
+
 	# Streaming loop
 	# TODO Timen?!
 	try:
+		print "Camera Node successfully launched!"
 		while True:
 			# Get frameset of color and depth
 			frames = pipeline.wait_for_frames()
-			#profile = pipeline.get_active_profile()
-			color_profile = rs.video_stream_profile(profile.get_stream(rs.stream.color))
-			color_intrinsics = color_profile.get_intrinsics()
-			#print color_intrinsics
-			# frames.get_depth_frame() is a 640x360 depth image
 			
 			# Align the depth frame to color frame
 			aligned_frames = align.process(frames)
@@ -81,7 +88,10 @@ def main(args):
 			pc.map_to(color)
 		
 		   	# Generate the pointcloud and texture mappings
-			points = pc.calculate(depth)
+			# DOES NOT WORK SOMEHOW
+			#points = pc.calculate(depth)
+			#vtx = np.asarray(points.get_vertices())
+			#print vtx[20 * width + 150]
 			
 			depth_image = np.asanyarray(aligned_depth_frame.get_data())
 			color_image = np.asanyarray(color_frame.get_data())
@@ -91,8 +101,8 @@ def main(args):
 			pub_msgs(h, color_image, depth_image)
 
 			# Render images
-			depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
-			images = np.hstack((color_image, depth_colormap))
+			#depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+			#images = np.hstack((color_image, depth_colormap))
 			#cv2.namedWindow('Align Example', cv2.WINDOW_AUTOSIZE)
 			#cv2.imshow('Align Example', images)
 			#cv2.waitKey(1)
@@ -128,8 +138,8 @@ def pub_msgs(h, color_img, depth_img):
 
 def make_camera_msg(h):
 	camera_info_msg = CameraInfo()
-	fx, fy = 616.741455078125, 616.919677734375
-	cx, cy = 324.818, 238.046
+	fx, fy = camera_intrinsics.fx, camera_intrinsics.fy
+	cx, cy = camera_intrinsics.ppx, camera_intrinsics.ppy
 	#cx, cy = 387.7503356933594, 241.0522918701172
 	camera_info_msg.header = h
 	camera_info_msg.header.frame_id = "camera_color_optical_frame"

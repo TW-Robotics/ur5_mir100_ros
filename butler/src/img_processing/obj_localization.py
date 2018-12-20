@@ -40,14 +40,6 @@ import tf
 	Calculates the position of the center of given object'''
 class img_processing():
 	def __init__(self, objectToSearch):
-		# Initialize Publisher and Subscribers
-		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Pose, queue_size=1)	# Publish xyz-Position of object
-		rospy.Subscriber("/camera/color/image_raw_rotated", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
-		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
-		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
-		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
-		rospy.Subscriber("/tf_camToBase", Pose, self.camPose_callback, queue_size=1)	# Camera Position and Orientation (dependent on robot pose)
-
 		# Initialize CVBridge
 		self.bridge = CvBridge()
 
@@ -63,6 +55,14 @@ class img_processing():
 		self.camPose = Pose()
 		self.camInfo = CameraInfo()
 		self.alpha = 0 # TODO: rename to grab_angle here and in robot_control
+
+		# Initialize Publisher and Subscribers
+		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Pose, queue_size=1)	# Publish xyz-Position of object
+		rospy.Subscriber("/camera/color/image_raw_rotated", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
+		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
+		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
+		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
+		rospy.Subscriber("/tf_camToBase", Pose, self.camPose_callback, queue_size=1)	# Camera Position and Orientation (dependent on robot pose)
 
 		# Wait for Subscribers to initialize
 		rospy.sleep(1)
@@ -96,6 +96,7 @@ class img_processing():
 			# Convert from ROS-Image to CV2::Mat
 			cv_rgb_image = self.bridge.imgmsg_to_cv2(data,"bgr8")
 			self.cv_rgb_image = cv_rgb_image.copy()
+			#self.locateObject()
 		except CvBridgeError as e:
 			print(e)
 
@@ -278,7 +279,7 @@ class img_processing():
 			# Detect if angle is positive or negative
 			if poi.y > objCenterPX.y:
 				alpha = -alpha
-			print alpha*180/pi
+			print "Angle is: " + str(alpha*180/pi)
 			# Grabable between 0 and 180 degrees, if last joint is 90 degrees turned TODO different range due to mounting?
 			# TODO Calculate angle in case it is bigger than 90 deg (grabable?)
 			if alpha < 0:
@@ -327,7 +328,7 @@ class img_processing():
 		if grabPoint.z != 0 and inp == 'y':
 			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
 			self.pub_object_pose(grabPoint, quats)
-			print grabPoint
+			#print grabPoint
 			cv2.destroyAllWindows()
 			return True
 		print "No depht-value, trying again"
