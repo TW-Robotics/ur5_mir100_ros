@@ -14,7 +14,7 @@ def main(args):
 	mir = mir_control.mirControler()
 	gripper = gripper_control.gripper()
 
-	ur5.checkBeforeDo = False
+	ur5.checkBeforeDo = True
 	ur5.speed = 0.4
 
 	##### Make sure the gripper is open
@@ -69,7 +69,7 @@ def main(args):
 
 	print "Correcting Position..."
 	imgProc.refresh_center_pos()
-	ur5.correctPositionXY(-imgProc.objCenterM.x/2, -imgProc.objCenterM.y/2)
+	ur5.move_xyz(-float(imgProc.objCenterM.x)/1000/2, -float(imgProc.objCenterM.y)/1000/2, 0)
 	
 	##### Locating the grasping point
 	print "Analysing depth-image..."
