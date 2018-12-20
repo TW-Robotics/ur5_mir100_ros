@@ -74,10 +74,7 @@ class ur5Controler(object):
 	def baseToObj_callback(self, data):
 		self.baseToObj = data
 
-	def refresh(self):
-		rospy.sleep(0.5)
-		return True
-
+	# No longer needed - function to make box at specific position; Function to attach mesh deleted
 	def addObject(self):
 		rospy.sleep(2)
 		obj_pose = geometry_msgs.msg.PoseStamped()
@@ -90,31 +87,7 @@ class ur5Controler(object):
 		self.scene.add_box(box_name, obj_pose, size=(0.6, 0.4, 0.6))
 		rospy.sleep(1)
 
-	def attachEEF(self):
-		rospy.sleep(2)
-		# Define the pose at the end of the robot
-		eef_pose = geometry_msgs.msg.PoseStamped()
-		eef_pose.header.frame_id = self.robot.get_planning_frame()
-		eef_pose.pose = self.group.get_current_pose().pose
-		eef_pose.pose.position.y = eef_pose.pose.position.y + 0.007
-
-		# Import the STL-Files
-		# x comes out of EEF, Y shows upwords, Z to the left (front view)		
-		#self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/butler/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
-		#self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/butler/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
-		#self.scene.add_mesh("gripper", eef_pose, "/home/mluser/catkin_ws/src/butler/butler/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
-		#self.scene.add_mesh("cam", eef_pose, "/home/mluser/catkin_ws/src/butler/butler/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
-		self.scene.add_mesh("eef", eef_pose, "/home/johannes/catkin_ws/src/butler/stl_Files/EEF.STL", size=(0.001, 0.001, 0.001))
-
-		rospy.sleep(1)
-		#print self.scene.get_known_object_names()
-
-		# Attach the EEF to the robot
-		eef_link = self.group.get_end_effector_link()
-		#self.scene.attach_mesh(eef_link, "gripper")
-		#self.scene.attach_mesh(eef_link, "cam")
-		self.scene.attach_mesh(eef_link, "eef")
-
+	# Move the robot to the position, where it starts to search for the object
 	def moveToSearchPose(self, orientation):
 		# drive to position where r = 0.4 and h = 0.6
 		jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0]
@@ -126,6 +99,7 @@ class ur5Controler(object):
 
 		self.execute_move(jointStates)
 
+	# Make sure to keep the object in the center of the image by moving joint 1 and 4
 	def followObject(self):
 		#print self.baseToObj.position
 		#print self.camToObj.position
@@ -171,7 +145,8 @@ class ur5Controler(object):
 		print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
 		self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
 		'''
-
+		
+	# Check if a given goal-pose is reachable
 	def isReachable(self, goalPose):
 		oldTime = self.group.get_planning_time()
 		self.group.set_planning_time(0.5)
@@ -183,6 +158,7 @@ class ur5Controler(object):
 			return False
 		return True
 
+	# Check if a given goal-pose and pre-goal-pose in zDist is reachable
 	def isGoalReachable(self, zDist):
 		current_pose = self.group.get_current_pose().pose
 		goal_pose = current_pose
@@ -205,6 +181,7 @@ class ur5Controler(object):
 			return False
 		return True		
 
+	# Move the robot to the pre-goal-pose to analyze the depth-image
 	def moveOverObject(self, zDist):
 		goal_pose = geometry_msgs.msg.Pose()
 
@@ -219,13 +196,15 @@ class ur5Controler(object):
 
 		self.execute_move(goal_pose)
 
-	def moveToGrabbingPose(self, alpha):
+	# Move the robot to to the position of the grasping point (first above it) in the correct orientation
+	def moveToGrabbingPose(self):
 		goal_pose = self.baseToObj
 		goal_pose.position.z = goal_pose.position.z + 0.15 # Make EEF stop 15 cm over object
 		self.execute_move(goal_pose)
 		goal_pose.position.z = goal_pose.position.z - 0.16 # Changed so it drives more down
 		self.execute_move(goal_pose)
 
+	# Move the robot to the left/right and down to search the object
 	def searchObject(self, num):
 		if num == 0:
 			self.move_joint(0, 25)
@@ -236,12 +215,6 @@ class ur5Controler(object):
 		else:
 			return False
 		return True
-
-	def correctPositionXY(self, x_goal, y_goal):
-		goal_pose = self.group.get_current_pose().pose
-		goal_pose.position.x = goal_pose.position.x + float(x_goal)/1000
-		goal_pose.position.y = goal_pose.position.y + float(y_goal)/1000
-		self.execute_move(goal_pose)
 
 	# Publish the robot's trajectory
 	def display_trajectory(self, plan):
