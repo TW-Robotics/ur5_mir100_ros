@@ -82,7 +82,7 @@ def main(args):
 	print "Found grasping point."
 	print "Moving to grasping point..."
 	rospy.rostime.wallsleep(0.5)	# needed to get actual position
-	ur5.moveToGrabbingPose(imgProc.graspAngle)
+	ur5.moveToGrabbingPose()
 	print "At grabbing position. Closing gripper."
 
 	##### Close the gripper to grasp object
