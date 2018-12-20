@@ -29,8 +29,6 @@ from math import pi
 # In order to make the mesh-importer working: https://launchpadlibrarian.net/319496602/patchPyassim.txt
 #		open /usr/lib/python2.7/dist-packages/pyassimp/core.py and change line 33 according to the link to "load, release, dll = helper.search_library()"
 
-# Set True to make the program ask before the robot moves
-checkBeforeDo = True
 debug = False
 
 # Class to control and move the ur5-robot
@@ -49,6 +47,9 @@ class ur5Controler(object):
 		# Init variables
 		self.camToObj = Pose()
 		self.baseToObj = Pose()
+
+		# Set True to make the program ask before the robot moves
+		self.checkBeforeDo = True
 
 		# Init moveit_commander
 		moveit_commander.roscpp_initialize(sys.argv)
@@ -98,7 +99,6 @@ class ur5Controler(object):
 		eef_pose.pose.position.y = eef_pose.pose.position.y + 0.007
 
 		# Import the STL-Files
-		# TODO Make path to parameter
 		# x comes out of EEF, Y shows upwords, Z to the left (front view)		
 		#self.scene.add_mesh("gripper", eef_pose, "/mnt/data/mluser/catkin_ws/src/butler/stl_Files/Greifer_mit_Flansch.STL",size=(0.001, 0.001, 0.001))
 		#self.scene.add_mesh("cam", eef_pose, "/mnt/data/mluser/catkin_ws/src/butler/stl_Files/Camera_mit_Halterung.STL",size=(0.001, 0.001, 0.001))
@@ -117,16 +117,12 @@ class ur5Controler(object):
 
 	def moveToSearchPose(self, orientation):
 		# drive to position where r = 0.4 and h = 0.6
-		
-		#jointStates = [0, -pi/2, pi/2, -2.79, -pi/2, pi/2]
-		#jointStates = [-0.0258, -0.09668, 0.17604, -1.262, -1.21092, 1.57]
-		#jointStates = [-pi+0.01, -0.098, -1.781, -1.262, -1.671, 1.57] # R1-R6
+		jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0]
 
-		# TODO make more beautiful
 		if orientation == "left":
-			jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #left
+			jointStates[0] = 110*pi/180
 		elif orientation == "right":
-			jointStates = [-100*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0] #right
+			jointStates[0] = -100*pi/180
 
 		self.execute_move(jointStates)
 
@@ -225,13 +221,12 @@ class ur5Controler(object):
 
 	def moveToGrabbingPose(self, alpha):
 		goal_pose = self.baseToObj
-		goal_pose.position.z = goal_pose.position.z + 0.15
+		goal_pose.position.z = goal_pose.position.z + 0.15 # Make EEF stop 15 cm over object
 		self.execute_move(goal_pose)
-		goal_pose.position.z = goal_pose.position.z - 0.16 #TODO changed so it drives more down
+		goal_pose.position.z = goal_pose.position.z - 0.16 # Changed so it drives more down
 		self.execute_move(goal_pose)
 
 	def searchObject(self, num):
-		# TODO make more beautiful
 		if num == 0:
 			self.move_joint(0, 25)
 		elif num == 1:
@@ -345,7 +340,7 @@ class ur5Controler(object):
 			self.group.stop()
 
 	# Move the robot along a specified way (plan)
-	def execute_plan(self, plan):	#TODO
+	def execute_plan(self, plan):
 		# Retime all timestamps of the way-points to make the robot move at a specified speed
 		plan = self.group.retime_trajectory(self.robot.get_current_state(), plan, self.speedScalingFactor)
 		self.display_trajectory(plan)
@@ -357,7 +352,7 @@ class ur5Controler(object):
 	# Check, if input necessary, if there is positive input
 	def confirmation(self, goal):
 		inp = ""
-		if (checkBeforeDo):
+		if self.checkBeforeDo == True:
 			if debug == True:
 				if type(goal) != RobotTrajectory:
 					print " *************************************** Current ***"
@@ -368,7 +363,7 @@ class ur5Controler(object):
 					print " *************************************** Goal ***"
 					print goal
 			inp = raw_input("Move robot? y/n: ")[0]
-		if (inp == 'y' or checkBeforeDo == False):
+		if (inp == 'y' or self.checkBeforeDo == False):
 			print "Moving robot..."
 			return True
 		print "Aborted by user."

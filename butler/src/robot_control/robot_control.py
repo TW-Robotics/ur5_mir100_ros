@@ -14,6 +14,9 @@ def main(args):
 	mir = mir_control.mirControler()
 	gripper = gripper_control.gripper()
 
+	ur5.checkBeforeDo = False
+	ur5.speed = 0.4
+
 	##### Make sure the gripper is open
 	#print "Calibrating gripper..."
 	#gripper.open()
@@ -43,6 +46,7 @@ def main(args):
 			print "No object found!"
 			return False
 		posID = posID + 1
+		rospy.rostime.wallsleep(1)
 
 	zDist = 300		# TODO make variable?!
 	##### Follow the found object - center it
@@ -78,7 +82,7 @@ def main(args):
 	print "Found grasping point."
 	print "Moving to grasping point..."
 	rospy.rostime.wallsleep(0.5)	# needed to get actual position
-	ur5.moveToGrabbingPose(imgProc.alpha)
+	ur5.moveToGrabbingPose(imgProc.graspAngle)
 	print "At grabbing position. Closing gripper."
 
 	##### Close the gripper to grasp object

@@ -49,12 +49,12 @@ class img_processing():
 		self.objCenterM = Point()
 		self.obj_radiusPX = 0  # Radius of object in image coordinates (px)
 		self.objectClass = objectToSearch
-		#self.cv_rgb_image = np.zeros((height,width,3), np.uint8)	TODO do correctly
+		#self.cv_rgb_image = np.zeros((height,width,3), np.uint8)	# Currently not needed
 		#self.cv_depth_image = np.zeros((height,width,3), np.uint8)
-		self.depth_array = 0
+		#self.depth_array = 0
 		self.camPose = Pose()
 		self.camInfo = CameraInfo()
-		self.alpha = 0 # TODO: rename to grab_angle here and in robot_control
+		self.graspAngle = 0
 
 		# Initialize Publisher and Subscribers
 		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Pose, queue_size=1)	# Publish xyz-Position of object
@@ -266,7 +266,7 @@ class img_processing():
 			grabPoint.y = int(poi.y + v.y * (lv-obj_radiusPX)/2)
 			grabPoint.z = self.depth_array[grabPoint.y, grabPoint.x]
 
-			# Calculation of angle alpha of vecotr v to axis
+			# Calculation of graspAngle of vecotr v to axis
 			# Make a vector along the x-axis
 			x_axis = Point()
 			x_axis.x = 1
@@ -274,20 +274,20 @@ class img_processing():
 			lx_axis = 1
 			lv = 1	# Set length to 1 because v is already resized
 			dotProduct = v.x*x_axis.x + v.y*x_axis.y
-			alpha = math.acos(dotProduct/(lv*lx_axis))
+			graspAngle = math.acos(dotProduct/(lv*lx_axis))
 
 			# Detect if angle is positive or negative
 			if poi.y > objCenterPX.y:
-				alpha = -alpha
-			print "Angle is: " + str(alpha*180/pi)
+				graspAngle = -graspAngle
+			print "Angle is: " + str(graspAngle*180/pi)
 			# Grabable between 0 and 180 degrees, if last joint is 90 degrees turned TODO different range due to mounting?
 			# TODO Calculate angle in case it is bigger than 90 deg (grabable?)
-			if alpha < 0:
-				alpha = pi + alpha
-				print "Corrected to " + str(alpha*180/pi)
+			if graspAngle < 0:
+				graspAngle = pi + graspAngle
+				print "Corrected to " + str(graspAngle*180/pi)
 
-			quats = tf.transformations.quaternion_from_euler(alpha+pi, -pi/2, pi/2, 'rzyx')
-			self.alpha = alpha
+			quats = tf.transformations.quaternion_from_euler(graspAngle+pi, -pi/2, pi/2, 'rzyx')
+			self.graspAngle = graspAngle
 
 			# Draw grab-point
 			cv2.circle(rgb_image ,(grabPoint.x, grabPoint.y), 2, (0,150,150),3)
@@ -316,6 +316,10 @@ class img_processing():
 		#output = np.hstack((cv_depth_image, bw_image))
 		output = np.hstack((cv2.cvtColor(cv_depth_image, cv2.COLOR_GRAY2BGR), rgb_image))
 
+		# Do it twice so the image is displayed correctly
+		cv2.imshow("Grab-Point", output)
+		cv2.waitKey(1)
+		rospy.sleep(0.1)
 		cv2.imshow("Grab-Point", output)
 		cv2.waitKey(1)
 
