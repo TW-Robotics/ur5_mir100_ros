@@ -54,7 +54,6 @@ class img_processing():
 		#self.depth_array = 0
 		self.camPose = Pose()
 		self.camInfo = CameraInfo()
-		self.graspAngle = 0
 
 		# Initialize Publisher and Subscribers
 		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Pose, queue_size=1)	# Publish xyz-Position of object
@@ -287,7 +286,6 @@ class img_processing():
 				print "Corrected to " + str(graspAngle*180/pi)
 
 			quats = tf.transformations.quaternion_from_euler(graspAngle+pi, -pi/2, pi/2, 'rzyx')
-			self.graspAngle = graspAngle
 
 			# Draw grab-point
 			cv2.circle(rgb_image ,(grabPoint.x, grabPoint.y), 2, (0,150,150),3)
