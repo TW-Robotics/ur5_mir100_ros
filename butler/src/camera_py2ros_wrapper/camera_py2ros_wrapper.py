@@ -37,7 +37,7 @@ pc = rs.pointcloud()
 points = rs.points()
 
 def main(args):
-	rospy.init_node("Camera_Python_Wrapper")
+	rospy.init_node("Camera_Python_Wrapper", disable_signals=True)
 
 	global camera_intrinsics
 

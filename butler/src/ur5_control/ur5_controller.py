@@ -32,12 +32,12 @@ from math import pi
 debug = False
 
 # Class to control and move the ur5-robot
-class ur5Controler(object):
+class ur5Controler():
 
 	distToObj = 1000
 
 	def __init__(self):
-		super(ur5Controler, self).__init__()
+		#super(ur5Controler, self).__init__()
 
 		# Set Robot speed and acceloration [0, 1] (only 0.1 steps)
 		self.speed = 0.1
@@ -195,6 +195,18 @@ class ur5Controler(object):
 		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
 
 		self.execute_move(goal_pose)
+
+	def moveToPreGrabbingPoseBottle(self):
+		goal_jointStates = self.group.get_current_joint_values()
+		goal_jointStates[1] = -1.2003753821002405
+		goal_jointStates[2] = 1.7064104080200195
+		goal_jointStates[3] = -0.4792559782611292
+		goal_jointStates[4] = 1.4872456789016724
+		goal_jointStates[5] = -3.133244339619772
+
+		#[-1.615082089100973, -1.2003753821002405, 1.7064104080200195, -0.4792559782611292, 1.4872456789016724, -3.133244339619772]
+		# Call function to move robot
+		self.execute_move(goal_jointStates)
 
 	# Move the robot to to the position of the grasping point (first above it) in the correct orientation
 	def moveToGrabbingPose(self):

@@ -123,7 +123,7 @@ class img_processing():
 	def locateObject(self):
 		# Check for object in found objects
 		for bounding_box in self.currentBoundingBoxes.bounding_boxes:
-			if (bounding_box.Class == self.objectClass or bounding_box.Class == "bowl" or bounding_box.Class == "bottle"): #TODO delete bowl
+			if (bounding_box.Class == self.objectClass or bounding_box.Class == "bowl"): #TODO delete bowl
 				self.objCenterPX.x = bounding_box.xmin + (bounding_box.xmax - bounding_box.xmin)/2
 				self.objCenterPX.y = bounding_box.ymin + (bounding_box.ymax - bounding_box.ymin)/2
 				self.objCenterPX.z = self.depth_array[self.objCenterPX.y][self.objCenterPX.x]
@@ -216,7 +216,7 @@ class img_processing():
 
 		# Calculate the area around the center of the cup, where should be searched for the handle
 		# TODO: Don't search in area of the cup center
-		sizeFactor = 1.5
+		sizeFactor = 1.8
 		start_y = int(objCenterPX.x - sizeFactor*obj_radiusPX)
 		start_x = int(objCenterPX.y - sizeFactor*obj_radiusPX)
 		end_y = int(objCenterPX.x + sizeFactor*obj_radiusPX)
@@ -336,12 +336,79 @@ class img_processing():
 		print "No depht-value, trying again"
 		return False
 
+	def find_bottle(self, threshold):
+		cv_depth_image = self.cv_depth_image.copy()
+		rgb_image = self.cv_rgb_image.copy()
+
+		# TODO: Do it with threshold
+		for x in range(0, 480-1):
+			for y in range(0, 640-1):
+				if cv_depth_image[x][y] > threshold or x >= 450:
+					cv_depth_image[x][y] = 255
+				else:
+					cv_depth_image[x][y] = 0
+		cv_depth_image = np.uint8(cv_depth_image)
+
+		# Blur the image to lose small regions which could be detected wrong
+		cv_depth_image = cv2.medianBlur(cv_depth_image, 39)
+		
+		# Find circles
+		circles = cv2.HoughCircles(cv_depth_image, cv2.HOUGH_GRADIENT, 2, 200, param1=50,param2=30,minRadius=0,maxRadius=70)
+		if type(circles) == np.ndarray:
+			circles = np.uint16(np.around(circles))		# circles[0] = x, 1 = y, 2 = R
+
+			# Find biggest circle
+			maxR = 0
+			actI = 0
+			biggestRIdx = 0
+			biggestCircle = 0
+			for i in circles[0,:]:
+				if i[2] > maxR:
+					maxR = i[2]
+					biggestRIdx = actI
+				actI = actI + 1
+
+			# Draw biggest circle onto image
+			for i in circles[0,:]:
+				cv2.circle(rgb_image, (i[0], i[1]), i[2], (0,255,0), 2)
+				cv2.circle(rgb_image, (i[0], i[1]), 2, (0,0,255), 3)
+			output = np.hstack((cv2.cvtColor(cv_depth_image, cv2.COLOR_GRAY2BGR), rgb_image))
+			cv2.imshow("Grasp Point", output)
+			cv2.waitKey(1)
+			rospy.sleep(0.5)
+			cv2.imshow("Grasp Point", output)
+			cv2.waitKey(1)
+
+			grabPoint = Point()
+			grabPoint.x = 1*int(circles[0][biggestRIdx][0])
+			grabPoint.y = 1*int(circles[0][biggestRIdx][1])
+			grabPoint.z = self.depth_array[grabPoint.y, grabPoint.x]
+
+			inp = raw_input("point correct? y/n: ")[0]
+
+			if grabPoint.z == 0:
+				print "Depth-value invalid. Taking Value from publisher."
+				#grabPoint.z = objCenterPX.z
+
+			if grabPoint.z != 0 and inp == 'y':
+				grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z+50)		# +50 so it does not grab at the top
+				quats = tf.transformations.quaternion_from_euler(pi/2, 0, pi, 'rzyx')
+				self.pub_object_pose(grabPoint, quats)
+				#print grabPoint
+				cv2.destroyAllWindows()
+				return True
+			print "No depht-value, trying again"
+			return False
+		else:
+			print "No bottle detected."
+			return False
+
 def main(args):
 	# Initialize ros-node and Class
-	rospy.init_node('objectLocator', anonymous=True)
+	rospy.init_node('objectLocator', anonymous=True, disable_signals=True)
 	img_proc = img_processing("cup")
 
-	print img_proc.find_handle(255)
+	print img_proc.find_bottle(481)
 
 	try:
 		rospy.spin()

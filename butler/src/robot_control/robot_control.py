@@ -5,13 +5,15 @@ from img_processing import obj_localization
 from gripper_control import gripper_control
 from mir_control import mir_control
 
+
+
 def main(args):
 	try:
 		# Initialize ros-node and Class
-		rospy.init_node('robotControl', anonymous=True)
+		rospy.init_node('robotControl', anonymous=True, disable_signals=True)
 
 		ur5 = ur5_controller.ur5Controler()
-		imgProc = obj_localization.img_processing("cup")
+		imgProc = obj_localization.img_processing(args[1])
 		mir = mir_control.mirControler()
 		gripper = gripper_control.gripper()
 
@@ -68,21 +70,28 @@ def main(args):
 		print "Goal is reachable. Driving over cup..."
 		ur5.moveOverObject(zDist)
 
-		print "Correcting Position..."
-		imgProc.refresh_center_pos()
-		ur5.move_xyz(-float(imgProc.objCenterM.x)/1000/2, -float(imgProc.objCenterM.y)/1000/2, 0)
+		if args[1] == "cup":
+			print "Correcting Position..."
+			imgProc.refresh_center_pos()
+			ur5.move_xyz(float(imgProc.objCenterM.y)/1000, float(imgProc.objCenterM.x)/1000, 0)
 
+		#zDist = 300
 		##### Locating the grasping point
 		print "Analysing depth-image..."
 		while True:
 			print "Searching for grasping point..."
 			imgProc.refresh_center_pos()
-			state = imgProc.find_handle(zDist + 81)		# + 81 weil Kamera nicht am TCP ist
+			if args[1] == "cup":
+				state = imgProc.find_handle(zDist + 81)		# + 81 weil Kamera nicht am TCP ist
+			elif args[1] == "bottle":
+				state = imgProc.find_bottle(zDist + 81)
 			if state == True:
 				break
 		print "Found grasping point."
 		print "Moving to grasping point..."
 		rospy.rostime.wallsleep(0.5)	# needed to get actual position
+		if args[1] == "bottle":
+			ur5.moveToPreGrabbingPoseBottle()
 		ur5.moveToGrabbingPose()
 		print "At grabbing position. Closing gripper."
 
