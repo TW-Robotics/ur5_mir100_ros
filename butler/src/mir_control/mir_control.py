@@ -29,6 +29,7 @@ class mirControler(object):
 	def isAtGoal(self):
 		thresholdP = 0.2
 		thresholdO = 0.1
+		# TODO this is wrong - should be Betrag of actPose-ragetPose < thershold
 		if self.actPose.position.x < self.targetPose.position.x + thresholdP and self.actPose.position.x > self.targetPose.position.x - thresholdP:
 			if self.actPose.position.y < self.targetPose.position.y + thresholdP and self.actPose.position.y > self.targetPose.position.y - thresholdP:
 				if self.actPose.orientation.z < self.targetPose.orientation.z + thresholdO and self.actPose.orientation.z > self.targetPose.orientation.z - thresholdO:
