@@ -16,7 +16,7 @@ def obj_pose_callback(data):
 
 def main(args):
 	# Init Node
-	rospy.init_node('tf_broadcaster')
+	rospy.init_node('tf_broadcaster', disable_signals=True)
 
 	# Init subscriber to Pose of object relative to camera
 	rospy.Subscriber("/tf_objToCam", Pose, obj_pose_callback, queue_size=1)

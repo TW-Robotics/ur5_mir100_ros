@@ -362,7 +362,7 @@ class ur5Controler():
 def main(args):
 	try:
 		# Initialize ros-node and Class
-		rospy.init_node('ur5Controler', anonymous=True)
+		rospy.init_node('ur5Controler', anonymous=True, disable_signals=True)
 		ur5 = ur5Controler()
 
 		#ur5.scene.remove_world_object()

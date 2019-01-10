@@ -22,7 +22,7 @@ def listToPose(trans, rot):
 
 def main(args):
 	# Init Node
-	rospy.init_node('tf_listener_publisher')
+	rospy.init_node('tf_listener_publisher', disable_signals=True)
 	
 	# Init Listener for tf-transformation
 	listener = tf.TransformListener()

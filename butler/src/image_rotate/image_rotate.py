@@ -66,7 +66,7 @@ class rossinator:
 
 def main(args):
 	# Initialize ros-node and Class
-	rospy.init_node('camera_rotate', anonymous=True)
+	rospy.init_node('camera_rotate', anonymous=True, disable_signals=True)
 	rossinator()
 
 	try:

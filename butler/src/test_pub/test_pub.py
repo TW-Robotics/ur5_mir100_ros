@@ -32,7 +32,7 @@ def main(args):
 	pub3 = rospy.Publisher('/ur_driver/URScript', String, queue_size=10)
 	#sub = rospy.Subscriber('/ur_driver/io_states', IOStates, iostatesCallback)
 
-	rospy.init_node('talker', anonymous=True)
+	rospy.init_node('talker', anonymous=True, disable_signals=True)
 	#rospy.spin()
 	#return
 
