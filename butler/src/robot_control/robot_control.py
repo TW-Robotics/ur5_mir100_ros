@@ -5,8 +5,6 @@ from img_processing import obj_localization
 from gripper_control import gripper_control
 from mir_control import mir_control
 
-
-
 def main(args):
 	try:
 		# Initialize ros-node and Class
@@ -30,7 +28,7 @@ def main(args):
 		##### Move the MiR to the Search-Goal
 		#print "Moving MiR to goal-position..."
 		#mir.moveToGoal(13.35, 6.66, 0)
-		#while mir.isAtGoal() == False:
+		#while mir.isAtGoal(0.2, 0.1) == False:
 		#	rospy.sleep(1)
 		#print "MiR is at goal-position"
 
