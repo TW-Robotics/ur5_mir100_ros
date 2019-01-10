@@ -10,6 +10,7 @@ def main(args):
 		# Initialize ros-node and Class
 		rospy.init_node('robotControl', anonymous=True, disable_signals=True)
 
+		# Check user-inputs and store them in variables
 		if len(args) < 7:
 			print "  ERROR: Too few arguments given."
 			print "  PARAMETERS: MiR-GoalX [m]"
@@ -37,14 +38,12 @@ def main(args):
 		gripper = gripper_control.gripper()
 
 		ur5.checkBeforeDo = True
-		ur5.speed = 0.4
+		ur5.speed = 0.1
 
 		##### Make sure the gripper is open
 		#print "Calibrating gripper..."
 		#gripper.open()
 		#rospy.sleep(5)
-
-
 
 		##### Move the MiR to the Search-Goal
 		#print "Moving MiR to goal-position..."
@@ -52,8 +51,6 @@ def main(args):
 		#while mir.isAtGoal(0.2, 0.1) == False:
 		#	rospy.sleep(1)
 		#print "MiR is at goal-position"
-
-
 
 		##### Searching for the object
 		# Move the UR5 to the search-pose
@@ -70,7 +67,7 @@ def main(args):
 			posID = posID + 1
 			rospy.rostime.wallsleep(1)
 
-		zDist = 300		# TODO make variable?!
+		zDist = 300		# TODO make variable with table height?!
 		##### Follow the found object - center it
 		while True:
 			print "Found Object... Centering"
@@ -98,7 +95,7 @@ def main(args):
 		##### Locating the grasping point
 		print "Analysing depth-image..."
 		while True:
-			print "Searching for grasping point..."
+			print "Searching for grasping point..."			# TODO add table-height to grasp-detection to not hurt UR
 			imgProc.refresh_center_pos()
 			if objectToSearch == "cup":
 				state = imgProc.find_handle(zDist + 81)		# + 81 weil Kamera nicht am TCP ist
