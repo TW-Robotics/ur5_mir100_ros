@@ -52,7 +52,6 @@ class img_processing():
 		#self.cv_rgb_image = np.zeros((height,width,3), np.uint8)	# Currently not needed
 		#self.cv_depth_image = np.zeros((height,width,3), np.uint8)
 		#self.depth_array = 0
-		self.camPose = Pose()
 		self.camInfo = CameraInfo()
 
 		# Initialize Publisher and Subscribers
@@ -61,7 +60,6 @@ class img_processing():
 		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
 		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
 		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
-		rospy.Subscriber("/tf_camToBase", Pose, self.camPose_callback, queue_size=1)	# Camera Position and Orientation (dependent on robot pose)
 
 		# Wait for Subscribers to initialize
 		rospy.sleep(1)
@@ -80,10 +78,6 @@ class img_processing():
 		pubPose.orientation.w = rxyzw[3]
 
 		self.object_pos_pub.publish(pubPose)
-
-	# Get the pose of the camera dependent on the robot pose
-	def camPose_callback(self, data):
-		self.camPose = data
 
 	# Get camera-info and make it accesible in the class
 	def cameraInfo_callback(self, data):
