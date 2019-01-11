@@ -17,7 +17,7 @@
 	  </collision>
 	</link>
 
-	<!-- For planning with gripper as EEF -->
+	<!-- For planning with gripper as EEF - reset by tf_transform but necessary here-->
     <link name="gripper">
       <collision>
         <geometry>

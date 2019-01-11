@@ -59,7 +59,7 @@
     <origin xyz="0.0 0.0823  0.0" rpy="${pi/2.0} 0.0 ${pi/2.0}" /> <!-- 0.0823 = wrist_3_length -->
   </joint>
 
-  <!-- Connection of gripper-frame to EEF to set TCP -->
+  <!-- Connection of gripper-frame to EEF to set TCP - reset by tf_transform but necessary here-->
   <joint name="gripper_fixed_joint" type="fixed">
     <parent link="wrist_3_link" />
     <child link= "gripper" />
