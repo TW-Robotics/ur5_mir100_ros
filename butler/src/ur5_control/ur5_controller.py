@@ -347,11 +347,56 @@ class ur5Controler():
 		self.group.set_max_velocity_scaling_factor(self.speed)
 		self.group.set_max_acceleration_scaling_factor(self.acceleration)
 
+	def moveToTransportPose(self, objectG):
+		if objectG == "bottle":
+			jointStates = [0.0578, -2.8086, 2.3535, 0.5217, 1.46010, -3.1305]
+		elif objectG == "cup":
+			jointStates = [-0.019, -2.243, 2.329, -1.643, -1.576, 0]
+
+		self.execute_move(jointStates)
+
+	def layDown(self, objectG, side):
+		act_jointStates = self.group.get_current_joint_values()
+		if side == "left":
+			act_jointStates[0] = 10000000
+		elif side == "right":
+			act_jointStates[0] = -1.6546
+		self.execute_move(act_jointStates)
+
+		if objectG == "bottle":
+			jointStates = [-1.6546, -1.024, 2.221, -1.197, 1.451, -3.124]
+		elif objectG == "cup":
+			jointStates = [-1.6546, -1.135, 2.196, -2.630, -1.583, 0]
+
+		self.execute_move(jointStates)
+
 def main(args):
 	try:
 		# Initialize ros-node and Class
 		rospy.init_node('ur5Controler', anonymous=True, disable_signals=True)
 		ur5 = ur5Controler()
+
+		print ur5.group.get_current_pose().pose
+
+		ur5.layDown("cup", "right")
+
+		print ur5.group.get_current_pose().pose
+#		return
+		ur5.moveToTransportPose("cup")
+
+		act_jointStates = ur5.group.get_current_joint_values()
+		act_jointStates[0] = -1.6546
+		ur5.execute_move(act_jointStates)
+
+#		print ur5.group.get_current_pose().pose
+
+		jointStates = [-1.6546, -1.024, 2.221, -1.197, 1.451, -3.124]
+		jointStates = [-1.6546, -1.135, 2.196, -2.630, -1.583, 0]
+		ur5.execute_move(jointStates)
+		#goalPose = [0.237, -0.624, 0.900, 0.718, 0, 0, -0.696]
+		#ur5.move_to_pose(goalPose)
+
+		return
 
 		#ur5.scene.remove_world_object()
 		#ur5.attachEEF()

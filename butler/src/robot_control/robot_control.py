@@ -21,9 +21,9 @@ def main(args):
 			print "              tableHeight [mm]"
 			return -1
 		else:
-			mirGoalX = args[1]
-			mirGoalY = args[2]
-			mirOrientation = args[3]
+			mirGoalX = float(args[1])
+			mirGoalY = float(args[2])
+			mirOrientation = float(args[3])
 			objectToSearch = args[4]
 			searchDirection = args[5]
 			tableHeight = args[6]
@@ -122,12 +122,15 @@ def main(args):
 
 		##### Move the robot up and down again
 		ur5.move_xyz(0, 0, 0.1)
-		ur5.move_xyz(0, 0, -0.1)
+		ur5.moveToTransportPose(objectToSearch)
+
+		ur5.layDown(objectToSearch, "right")
+		#ur5.move_xyz(0, 0, -0.1)
 
 		gripper.open()
 		rospy.sleep(5)
 
-		ur5.move_xyz(0, 0, 0.1)
+		#ur5.move_xyz(0, 0, 0.1)
 		return True
 	
 	except KeyboardInterrupt:

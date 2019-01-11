@@ -26,9 +26,9 @@ class mirControler():
 
 	# Check if robot is at goal within thresholds
 	def isAtGoal(self, thresholdP, thresholdO):
-		if math.abs(self.actPose.position.x - self.targetPose.position.x) < thresholdP:
-			if math.abs(self.actPose.position.y - self.targetPose.position.y) < thresholdP:
-				if math.abs(self.actPose.orientation.z - self.targetPose.orientation.z) < thresholdO:
+		if math.fabs(self.actPose.position.x - self.targetPose.position.x) < thresholdP:
+			if math.fabs(self.actPose.position.y - self.targetPose.position.y) < thresholdP:
+				if math.fabs(self.actPose.orientation.z - self.targetPose.orientation.z) < thresholdO:
 					return True
 		return False
 
@@ -52,12 +52,12 @@ class mirControler():
 		mirGoalMsg.header.frame_id = '/map' 							# Note: the frame_id must be map
 		#mirGoalMsg.goal.target_pose.header.stamp = rospy.Time.now()	# optional
 		mirGoalMsg.goal.target_pose.header.frame_id = '/map'			# Note: the frame_id must be map
-		mirGoalMsg.goal.target_pose.pose.position.x = x
-		mirGoalMsg.goal.target_pose.pose.position.y = y
+		mirGoalMsg.goal.target_pose.pose.position.x = float(x)
+		mirGoalMsg.goal.target_pose.pose.position.y = float(y)
 		mirGoalMsg.goal.target_pose.pose.position.z = 0 				# z must be 0.0 (no height in the map)
 
-		mirGoalMsg.goal.target_pose.pose.orientation.z = quats[2]
-		mirGoalMsg.goal.target_pose.pose.orientation.w = quats[3]
+		mirGoalMsg.goal.target_pose.pose.orientation.z = float(quats[2])
+		mirGoalMsg.goal.target_pose.pose.orientation.w = float(quats[3])
 		#mirGoalMsg.goal_id.stamp = rospy.Time.now()					# optional
 		#mirGoalMsg.goal_id.id = '10'									# optional
 		
