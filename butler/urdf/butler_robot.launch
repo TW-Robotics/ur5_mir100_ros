@@ -1,3 +1,4 @@
+<!-- Launch skript which uploads robot descripton to the ROS-Core and spawns model in gazebo for simulation -->
 <launch>
 	<!-- URDF -->
 	<include file="$(find butler)/urdf/upload_butler_robot_urdf.launch" />

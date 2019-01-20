@@ -1,3 +1,4 @@
+<!-- Representation of the control-box the UR5 is placed on -->
 <?xml version="1.0"?>
 <robot name="controlbox">
 	<link name="controlbox">

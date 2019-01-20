@@ -1,0 +1,8 @@
+butler_robot.launch 
+	spawns the robot in its environment for simulation,
+	calls
+upload_butler_robot.urdf.launch
+	which loads the robot-model to the roscore, which is made by
+butler_robot.urdf.xacro
+	which loads all components (such as MiR, UR, controlbox.urdf and eef.urdf),
+	and connects them
