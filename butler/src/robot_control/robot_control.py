@@ -4,6 +4,7 @@ from ur5_control import ur5_controller
 from img_processing import obj_localization
 from gripper_control import gripper_control
 from mir_control import mir_control
+from mission_control import mission_control
 
 def main(args):
 	try:
@@ -11,26 +12,26 @@ def main(args):
 		rospy.init_node('robotControl', anonymous=True, disable_signals=True)
 
 		# Check user-inputs and store them in variables
-		if len(args) < 7:
+		if len(args) < 4:
 			print "  ERROR: Too few arguments given."
-			print "  PARAMETERS: MiR-GoalX [m]"
-			print "              MiR-GoalY [m]"
-			print "              MiR-Orientation [degrees]"
+			print "  PARAMETERS: pickUp goal name"
+			print "              putDown goal name"
 			print "              objectToSearch ['cup' or 'bottle']"
-			print "              UR-SearchDirection ['left' or 'right']"
-			print "              tableHeight [mm]"
 			return -1
 		else:
-			mirGoalX = float(args[1])
-			mirGoalY = float(args[2])
-			mirOrientation = float(args[3])
-			objectToSearch = args[4]
-			searchDirection = args[5]
-			tableHeight = args[6]
-			if searchDirection != "left" and searchDirection != "right":
-				print "  ERROR: Search-Direction must be either 'left' or 'right'."
+			pickUp = mission_control.goal(args[1])
+			putDown = mission_control.goal(args[2])
+			objectToSearch = args[3]
+			if pickUp.name == "invalid" or putDown.name == "invalid":
+				print "  ERROR: Invalid goal name! Check names of goals with file mission_control.py."
+				return
 			if objectToSearch != "cup" and objectToSearch != "bottle":
-				print "  ERROR: Object-to-Search must be either 'cup' or 'bottle'."				
+				print "  ERROR: Object-to-Search must be either 'cup' or 'bottle'."
+				return
+		print "Searching for ", objectToSearch, " at "
+		pickUp.display()
+		print "transporting it to "
+		putDown.display()
 
 		ur5 = ur5_controller.ur5Controler()
 		imgProc = obj_localization.img_processing(objectToSearch)
@@ -45,17 +46,22 @@ def main(args):
 		#gripper.open()
 		#rospy.sleep(5)
 
+		##### Move the UR to the Driving-Pose
+		ur5.moveToDrivingPose()
+
 		##### Move the MiR to the Search-Goal
-		#print "Moving MiR to goal-position..."
-		#mir.moveToGoal(mirGoalX, mirGoalY, mirOrientation)
-		#while mir.isAtGoal(0.2, 0.1) == False:
-		#	rospy.sleep(1)
-		#print "MiR is at goal-position"
+		inp = raw_input("Move MiR robot? y/n: ")[0]
+		if (inp == 'y'):
+			print "Moving MiR to goal-position..."
+			mir.moveToGoal(pickUp.posx, pickUp.posy, pickUp.rz)
+			while mir.isAtGoal(0.2, 0.1) == False:
+				rospy.sleep(1)
+		print "MiR is at goal-position"
 
 		##### Searching for the object
 		# Move the UR5 to the search-pose
 		print "Moving robot to search position..."
-		ur5.moveToSearchPose(searchDirection)
+		ur5.moveToSearchPose(pickUp.orientation, pickUp.height)
 
 		# As long as the searched object is not visible
 		posID = 0
@@ -73,7 +79,6 @@ def main(args):
 			print "Found Object... Centering"
 			imgProc.refresh_center_pos()
 			ur5.followObject()
-			#print "Distance to object: " + str(ur5.distToObj)
 			rospy.rostime.wallsleep(0.5)
 			imgProc.refresh_center_pos()
 			rospy.rostime.wallsleep(0.5)
@@ -84,23 +89,24 @@ def main(args):
 
 		##### Driving over the object
 		print "Goal is reachable. Driving over cup..."
-		ur5.moveOverObject(zDist)
+		ur5.moveOverObject(zDist, pickUp.height)
 
 		if objectToSearch == "cup":
 			print "Correcting Position..."
 			imgProc.refresh_center_pos()
 			ur5.move_xyz(float(imgProc.objCenterM.y)/1000, float(imgProc.objCenterM.x)/1000, 0)
 
-		#zDist = 300
 		##### Locating the grasping point
 		print "Analysing depth-image..."
 		while True:
-			print "Searching for grasping point..."			# TODO add table-height to grasp-detection to not hurt UR
+			print "Searching for grasping point..."
 			imgProc.refresh_center_pos()
+			threshold = ur5.tcp_to_floor() + 81 - pickUp.height 		# + 81 weil Kamera nicht am TCP ist
+			print threshold
 			if objectToSearch == "cup":
-				state = imgProc.find_handle(zDist + 81)		# + 81 weil Kamera nicht am TCP ist
+				state = imgProc.find_cup_graspPoint(threshold)		    # TODO Test code
 			elif objectToSearch == "bottle":
-				state = imgProc.find_bottle(zDist + 81)
+				state = imgProc.find_bottle_graspPoint(threshold)		# WAR zDist + 81 (=381)
 			if state == True:
 				break
 		print "Found grasping point."
@@ -120,17 +126,27 @@ def main(args):
 			print "Error grasping object!"
 			return False
 
-		##### Move the robot up and down again
+		##### Move the robot up
 		ur5.move_xyz(0, 0, 0.1)
 		ur5.moveToTransportPose(objectToSearch)
 
-		ur5.layDown(objectToSearch, "right")
-		#ur5.move_xyz(0, 0, -0.1)
+		##### Move the MiR to the Goal
+		inp = raw_input("Move MiR robot? y/n: ")[0]
+		if (inp == 'y'):
+			print "Moving MiR to goal-position..."
+			mir.moveToGoal(putDown.posx, putDown.posy, putDown.rz)
+			while mir.isAtGoal(0.2, 0.1) == False:
+				rospy.sleep(1)
+		print "MiR is at goal-position"
 
+		##### Move the UR to putDownPose and open gripper
+		ur5.layDown(objectToSearch, putDown.orientation, pickUp.height, putDown.height)
 		gripper.open()
 		rospy.sleep(5)
 
-		#ur5.move_xyz(0, 0, 0.1)
+		##### Move the UR back to safe pose
+		ur5.move_xyz(0, 0, 0.1)
+		ur5.moveToDrivingPose()
 		return True
 	
 	except KeyboardInterrupt:

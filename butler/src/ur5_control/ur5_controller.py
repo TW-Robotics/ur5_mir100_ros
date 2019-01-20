@@ -47,6 +47,8 @@ class ur5Controler():
 		# Init variables
 		self.camToObj = Pose()
 		self.baseToObj = Pose()
+		self.floor_to_UR = 130 		# TODO to be measured in mm
+		self.pickUpHeight = 0 		# in m
 
 		# Set True to make the program ask before the robot moves
 		self.checkBeforeDo = True
@@ -71,160 +73,6 @@ class ur5Controler():
 
 	def baseToObj_callback(self, data):
 		self.baseToObj = data
-
-	# No longer needed - function to make box at specific position; Function to attach mesh deleted
-	def addObject(self):
-		rospy.sleep(2)
-		obj_pose = geometry_msgs.msg.PoseStamped()
-		obj_pose.header.frame_id = self.robot.get_planning_frame()
-		obj_pose.pose.orientation.w = 1.0
-		obj_pose.pose.position.x = -0.2
-		obj_pose.pose.position.y = 0
-		obj_pose.pose.position.z = -0.3
-		box_name = "MIR"
-		self.scene.add_box(box_name, obj_pose, size=(0.6, 0.4, 0.6))
-		rospy.sleep(1)
-
-	# Move the robot to the position, where it starts to search for the object
-	def moveToSearchPose(self, orientation):
-		# drive to position where r = 0.4 and h = 0.6
-		jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0]
-
-		if orientation == "left":
-			jointStates[0] = 110*pi/180
-		elif orientation == "right":
-			jointStates[0] = -100*pi/180
-
-		self.execute_move(jointStates)
-
-	# Make sure to keep the object in the center of the image by moving joint 1 and 4
-	def followObject(self):
-		#print self.baseToObj.position
-		#print self.camToObj.position
-
-		# Joint 1
-		#print "move joint 1"
-		act_jointStates = self.group.get_current_joint_values()
-		theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
-		beta = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
-		a = math.sqrt(self.baseToObj.position.y**2 + self.baseToObj.position.x**2)
-		b = math.sqrt(self.camToObj.position.z**2 + self.camToObj.position.x**2)
-		#print a
-		#print beta
-		delta = math.asin(b/a * math.sin(pi/2 + beta))
-		if debug == True:
-			print "correction deg: " + str(delta*180/pi)
-			print "goal: " + str((act_jointStates[0] - delta)*180/pi)
-		#self.move_joint_to_target(0, act_jointStates[0] - delta)
-
-		# Joint 4
-		#print "move joint 4"
-		act_jointStates = self.group.get_current_joint_values()
-		phi = math.atan2(self.camToObj.position.z, self.camToObj.position.y)
-		if debug == True:
-			print "correction deg: " + str((pi/2-phi)*180/pi)
-			print "goal: " + str((act_jointStates[3] + (pi/2 - phi))*180/pi)
-		#self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
-
-		# Move joints simulatenously
-		goal_jointStates = act_jointStates
-		goal_jointStates[0] = act_jointStates[0] - delta
-		goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
-		self.execute_move(goal_jointStates)
-
-		self.distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
-		#print "Distance to obj: " + str(self.distToObj)
-
-		# Joint 5
-		'''print "move joint 5"
-		act_jointStates = self.group.get_current_joint_values()
-		gamma = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
-		print "correction deg: " + str((pi/2-gamma)*180/pi)
-		print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
-		self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
-		'''
-		
-	# Check if a given goal-pose is reachable
-	def isReachable(self, goalPose):
-		oldTime = self.group.get_planning_time()
-		self.group.set_planning_time(0.5)
-		self.group.set_pose_target(goalPose)
-		plan = self.group.plan()
-		self.group.clear_pose_targets()
-		self.group.set_planning_time(oldTime)
-		if len(plan.joint_trajectory.joint_names) == 0:
-			return False
-		return True
-
-	# Check if a given goal-pose and pre-goal-pose in zDist is reachable
-	def isGoalReachable(self, zDist):
-		current_pose = self.group.get_current_pose().pose
-		goal_pose = current_pose
-
-		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
-		goal_pose.orientation.x = quats[0]
-		goal_pose.orientation.y = quats[1]
-		goal_pose.orientation.z = quats[2]
-		goal_pose.orientation.w = quats[3]
-		goal_pose.position.x = self.baseToObj.position.x
-		goal_pose.position.y = self.baseToObj.position.y
-		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
-
-		if not self.isReachable(goal_pose):
-			return False
-
-		goal_pose.position.z = self.baseToObj.position.z
-
-		if not self.isReachable(goal_pose):
-			return False
-		return True		
-
-	# Move the robot to the pre-goal-pose to analyze the depth-image
-	def moveOverObject(self, zDist):
-		goal_pose = geometry_msgs.msg.Pose()
-
-		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
-		goal_pose.orientation.x = quats[0]
-		goal_pose.orientation.y = quats[1]
-		goal_pose.orientation.z = quats[2]
-		goal_pose.orientation.w = quats[3]
-		goal_pose.position.x = self.baseToObj.position.x
-		goal_pose.position.y = self.baseToObj.position.y
-		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
-
-		self.execute_move(goal_pose)
-
-	def moveToPreGrabbingPoseBottle(self):
-		goal_jointStates = self.group.get_current_joint_values()
-		goal_jointStates[1] = -1.2003753821002405
-		goal_jointStates[2] = 1.7064104080200195
-		goal_jointStates[3] = -0.4792559782611292
-		goal_jointStates[4] = 1.4872456789016724
-		goal_jointStates[5] = -3.133244339619772
-
-		#[-1.615082089100973, -1.2003753821002405, 1.7064104080200195, -0.4792559782611292, 1.4872456789016724, -3.133244339619772]
-		# Call function to move robot
-		self.execute_move(goal_jointStates)
-
-	# Move the robot to to the position of the grasping point (first above it) in the correct orientation
-	def moveToGrabbingPose(self):
-		goal_pose = self.baseToObj
-		goal_pose.position.z = goal_pose.position.z + 0.15 # Make EEF stop 15 cm over object
-		self.execute_move(goal_pose)
-		goal_pose.position.z = goal_pose.position.z - 0.16 # Changed so it drives more down
-		self.execute_move(goal_pose)
-
-	# Move the robot to the left/right and down to search the object
-	def searchObject(self, num):
-		if num == 0:
-			self.move_joint(0, 25)
-		elif num == 1:
-			self.move_joint(3, 15)
-		elif num == 2:
-			self.move_joint(0, -25)
-		else:
-			return False
-		return True
 
 	# Move robot to upright position
 	def go_home(self):
@@ -347,6 +195,170 @@ class ur5Controler():
 		self.group.set_max_velocity_scaling_factor(self.speed)
 		self.group.set_max_acceleration_scaling_factor(self.acceleration)
 
+	# No longer needed - function to make box at specific position; Function to attach mesh deleted
+	def addObject(self):
+		rospy.sleep(2)
+		obj_pose = geometry_msgs.msg.PoseStamped()
+		obj_pose.header.frame_id = self.robot.get_planning_frame()
+		obj_pose.pose.orientation.w = 1.0
+		obj_pose.pose.position.x = -0.2
+		obj_pose.pose.position.y = 0
+		obj_pose.pose.position.z = -0.3
+		box_name = "MIR"
+		self.scene.add_box(box_name, obj_pose, size=(0.6, 0.4, 0.6))
+		rospy.sleep(1)
+		
+	# Check if a given goal-pose is reachable
+	def isReachable(self, goalPose):
+		oldTime = self.group.get_planning_time()
+		self.group.set_planning_time(0.5)
+		self.group.set_pose_target(goalPose)
+		plan = self.group.plan()
+		self.group.clear_pose_targets()
+		self.group.set_planning_time(oldTime)
+		if len(plan.joint_trajectory.joint_names) == 0:
+			return False
+		return True
+
+	# Check if a given goal-pose and pre-goal-pose in zDist is reachable
+	def isGoalReachable(self, zDist):
+		current_pose = self.group.get_current_pose().pose
+		goal_pose = current_pose
+
+		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
+		goal_pose.orientation.x = quats[0]
+		goal_pose.orientation.y = quats[1]
+		goal_pose.orientation.z = quats[2]
+		goal_pose.orientation.w = quats[3]
+		goal_pose.position.x = self.baseToObj.position.x
+		goal_pose.position.y = self.baseToObj.position.y
+		goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
+
+		if not self.isReachable(goal_pose):
+			return False
+
+		goal_pose.position.z = self.baseToObj.position.z
+
+		if not self.isReachable(goal_pose):
+			return False
+		return True		
+
+	# Make sure to keep the object in the center of the image by moving joint 1 and 4
+	def followObject(self):
+		#print self.baseToObj.position
+		#print self.camToObj.position
+
+		# Joint 1
+		#print "move joint 1"
+		act_jointStates = self.group.get_current_joint_values()
+		theta = math.atan2(self.baseToObj.position.y, self.baseToObj.position.x)
+		beta = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
+		a = math.sqrt(self.baseToObj.position.y**2 + self.baseToObj.position.x**2)
+		b = math.sqrt(self.camToObj.position.z**2 + self.camToObj.position.x**2)
+		#print a
+		#print beta
+		delta = math.asin(b/a * math.sin(pi/2 + beta))
+		if debug == True:
+			print "correction deg: " + str(delta*180/pi)
+			print "goal: " + str((act_jointStates[0] - delta)*180/pi)
+		#self.move_joint_to_target(0, act_jointStates[0] - delta)
+
+		# Joint 4
+		#print "move joint 4"
+		act_jointStates = self.group.get_current_joint_values()
+		phi = math.atan2(self.camToObj.position.z, self.camToObj.position.y)
+		if debug == True:
+			print "correction deg: " + str((pi/2-phi)*180/pi)
+			print "goal: " + str((act_jointStates[3] + (pi/2 - phi))*180/pi)
+		#self.move_joint_to_target(3, act_jointStates[3] + (pi/2 - phi))
+
+		# Move joints simulatenously
+		goal_jointStates = act_jointStates
+		goal_jointStates[0] = act_jointStates[0] - delta
+		goal_jointStates[3] = act_jointStates[3] + (pi/2 - phi)
+		self.execute_move(goal_jointStates)
+
+		self.distToObj = math.sqrt(self.baseToObj.position.x**2 + self.baseToObj.position.y**2 + self.baseToObj.position.z**2)
+		#print "Distance to obj: " + str(self.distToObj)
+
+		# Joint 5
+		'''print "move joint 5"
+		act_jointStates = self.group.get_current_joint_values()
+		gamma = math.atan2(self.camToObj.position.z, self.camToObj.position.x)
+		print "correction deg: " + str((pi/2-gamma)*180/pi)
+		print "goal: " + str((act_jointStates[4] - (pi/2 - gamma))*180/pi)
+		self.move_joint_to_target(4, act_jointStates[4] - (pi/2 - gamma))		
+		'''
+
+	# Move the robot to the position, where it starts to search for the object
+	def moveToSearchPose(self, orientation, tableHeight):
+		# drive to position where r = 0.4 and h = 0.6
+		jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0]
+
+		if orientation == "left":
+			jointStates[0] = 110*pi/180
+		elif orientation == "right":
+			jointStates[0] = -100*pi/180
+		elif orientation == "front":
+			jointStates[0] = 0		# TODO correct value
+
+		self.execute_move(jointStates)
+
+		# TODO Test code
+		actPose = self.group.get_current_pose().pose
+		actPose.z = actPose.z - float(720) / 1000 + float(tableHeight) / 1000
+		self.execute_move(actPose)
+
+	# Move the robot to the left/right and down to search the object
+	def searchObject(self, num):
+		if num == 0:
+			self.move_joint(0, 25)
+		elif num == 1:
+			self.move_joint(3, 15)
+		elif num == 2:
+			self.move_joint(0, -25)
+		else:
+			return False
+		return True
+
+	# Move the robot to the pre-goal-pose to analyze the depth-image
+	def moveOverObject(self, zDist, tableHeight):
+		goal_pose = geometry_msgs.msg.Pose()
+
+		quats = tf.transformations.quaternion_from_euler(pi/2, self.group.get_current_joint_values()[0], -pi/2, 'rxyz')
+		goal_pose.orientation.x = quats[0]
+		goal_pose.orientation.y = quats[1]
+		goal_pose.orientation.z = quats[2]
+		goal_pose.orientation.w = quats[3]
+		goal_pose.position.x = self.baseToObj.position.x
+		goal_pose.position.y = self.baseToObj.position.y
+		#goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
+		goal_pose.position.z = float(zDist + tableHeight - self.floor_to_UR) / 1000 	# TODO Test code
+
+		self.execute_move(goal_pose)
+
+	def moveToPreGrabbingPoseBottle(self):
+		goal_jointStates = self.group.get_current_joint_values()
+		goal_jointStates[1] = -1.2003753821002405
+		goal_jointStates[2] = 1.7064104080200195
+		goal_jointStates[3] = -0.4792559782611292
+		goal_jointStates[4] = 1.4872456789016724
+		goal_jointStates[5] = -3.133244339619772
+
+		#[-1.615082089100973, -1.2003753821002405, 1.7064104080200195, -0.4792559782611292, 1.4872456789016724, -3.133244339619772]
+		# Call function to move robot
+		self.execute_move(goal_jointStates)
+
+	# Move the robot to to the position of the grasping point (first above it) in the correct orientation
+	def moveToGrabbingPose(self):
+		goal_pose = self.baseToObj
+		goal_pose.position.z = goal_pose.position.z + 0.15 # Make EEF stop 15 cm over object
+		self.execute_move(goal_pose)
+		goal_pose.position.z = goal_pose.position.z - 0.16 # Changed so it drives more down
+		self.execute_move(goal_pose)
+		# Store pickUpHeight to put down object later
+		self.pickUpHeight = goal_pose.position.z
+
 	def moveToTransportPose(self, objectG):
 		if objectG == "bottle":
 			jointStates = [0.0578, -2.8086, 2.3535, 0.5217, 1.46010, -3.1305]
@@ -355,20 +367,39 @@ class ur5Controler():
 
 		self.execute_move(jointStates)
 
-	def layDown(self, objectG, side):
+	def moveToDrivingPose(self):
+		jointStates = [-0.019, -2.243, 2.329, -1.643, -1.576, 0]	# TODO correct angles
+		self.execute_move(jointStates)
+
+	def layDown(self, objectG, side, pickUpTableHeight, putDownTableHeight):	# TODO Add height
 		act_jointStates = self.group.get_current_joint_values()
 		if side == "left":
-			act_jointStates[0] = 10000000
+			act_jointStates[0] = 90*pi/180
 		elif side == "right":
-			act_jointStates[0] = -1.6546
+			act_jointStates[0] = -90*pi/180
+		if side == "front":
+			act_jointStates[0] = 0  	# TODO correct values
 		self.execute_move(act_jointStates)
 
+		# TODO get values which are over object for sure
+		# Drive to PRE-putDown-Pose
 		if objectG == "bottle":
-			jointStates = [-1.6546, -1.024, 2.221, -1.197, 1.451, -3.124]
+			jointStates = [-90*pi/180, -1.024, 2.221, -1.197, 1.451, -3.124]
 		elif objectG == "cup":
-			jointStates = [-1.6546, -1.135, 2.196, -2.630, -1.583, 0]
-
+			jointStates = [-90*pi/180, -1.135, 2.196, -2.630, -1.583, 0]
 		self.execute_move(jointStates)
+
+		# TODO Test code
+		# Drive down to putDown-Pose
+		actPose = self.group.get_current_pose().pose
+		pickUpHeight_overTable = self.pickUpHeight - float(pickUpTableHeight) / 1000	# + float(self.floor_to_UR) / 1000 
+		actPose.z = float(putDownTableHeight) / 1000 + pickUpHeight_overTable 			# - float(self.floor_to_UR) / 1000
+		self.execute_move(actPose)
+
+	def tcp_to_floor(self):
+		UR_z = self.group.get_current_pose().pose.z * 1000 	# mm
+
+		return self.floor_to_UR + UR_z
 
 def main(args):
 	try:
@@ -376,27 +407,27 @@ def main(args):
 		rospy.init_node('ur5Controler', anonymous=True, disable_signals=True)
 		ur5 = ur5Controler()
 
+		# Abstand floor_to_UR ermitteln
 		print ur5.group.get_current_pose().pose
 
-		ur5.layDown("cup", "right")
+		# Search-Pose R1 ermitteln und Hoehe testen
+		print ur5.group.get_current_joint_values()
+		ur5.moveToSearchPose("left", 720)
+		ur5.moveToSearchPose("right", 620)
+		ur5.moveToSearchPose("front", 820)
 
-		print ur5.group.get_current_pose().pose
-#		return
-		ur5.moveToTransportPose("cup")
+		# Ueber Objekt fahren nur von Tischhoehe abhaengig
+		ur5.moveOverObject(300, 720)
 
-		act_jointStates = ur5.group.get_current_joint_values()
-		act_jointStates[0] = -1.6546
-		ur5.execute_move(act_jointStates)
+		# Driving-Pose ermitteln, layDown-Pose (R1 + andere) ermitteln
+		print ur5.group.get_current_joint_values()
 
-#		print ur5.group.get_current_pose().pose
-
-		jointStates = [-1.6546, -1.024, 2.221, -1.197, 1.451, -3.124]
-		jointStates = [-1.6546, -1.135, 2.196, -2.630, -1.583, 0]
-		ur5.execute_move(jointStates)
-		#goalPose = [0.237, -0.624, 0.900, 0.718, 0, 0, -0.696]
-		#ur5.move_to_pose(goalPose)
+		# layDown-Pose Hoehe testen
+		ur5.layDown("cup", "right", 720, 820)
 
 		return
+
+
 
 		#ur5.scene.remove_world_object()
 		#ur5.attachEEF()
