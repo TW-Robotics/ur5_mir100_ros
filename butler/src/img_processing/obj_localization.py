@@ -164,99 +164,114 @@ class img_processing():
 
 		return center_point
 
-	# Calculate and publish pose where to grab the cup
-	def find_handle(self, threshold):
-		# Copy values and make sure the values are integers
-		objCenterPX = Point()
-		objCenterPX.x = int(self.objCenterPX.x)	#TODO do it at storage
-		objCenterPX.y = int(self.objCenterPX.y)
-		obj_radiusPX = int(self.obj_radiusPX)
-		cv_depth_image = self.cv_depth_image.copy()
-		rgb_image = self.cv_rgb_image.copy()
+	def remove_bg(self, threshold, blurVal):
+		# Set all pixels to 255 which are farer away then "threshold" (depends on robot pre-position)
+		cv2.threshold(self.cv_depth_image_local, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image_local)
 
-		#cv2.imshow("Grab-Point", self.cv_depth_image)
-		#cv2.waitKey(1)
-		#return False
-		#print type(self.cv_depth_image)
-		#self.cv_depth_image = np.uint8(self.cv_depth_image)
-		# Set all pixels to 255, which are farer away then "threshold" (depends on robot pre-position)
-		# TODO: Write function which calculates best threshold by it's own with percent of white/black pixels 
-		#cv2.threshold(self.cv_depth_image, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image)
-		# Convert the image to uint8 to make it processible with other functions
-		#print len(self.cv_depth_image[0])
-
-		# TODO: Do it with threshold
-		for x in range(0, 480-1):
+		# Set all pixel to 255 which are gripper (x >= 450)
+		for x in range(450, 480-1):
 			for y in range(0, 640-1):
-				if cv_depth_image[x][y] > threshold or x >= 450:
-					cv_depth_image[x][y] = 255
-				else:
-					cv_depth_image[x][y] = 0
-		cv_depth_image = np.uint8(cv_depth_image)
-		
-		#while True:
-		#	cv2.imshow("Grab-Point", cv_depth_image)
-		#	cv2.waitKey(1)
+					self.cv_depth_image_local[x][y] = 255
+
+		# Convert the image to uint8 to make it processible with other functions
+		self.cv_depth_image_local = np.uint8(self.cv_depth_image_local)
 
 		# Blur the image to lose small regions which could be detected wrong
-		cv_depth_image = cv2.medianBlur(cv_depth_image, 5)
-		
-		#while True:
-			#print cv_depth_image
-		#cv2.imshow("CutOff", cv_depth_image)
-		#cv2.waitKey(1)
-		#return False
-			#rospy.sleep(2)
+		self.cv_depth_image_local = cv2.medianBlur(self.cv_depth_image_local, blurVal)
 
+	def disp_graspPoint(self):
+		# Display the images
+		output = np.hstack((cv2.cvtColor(self.cv_depth_image_local, cv2.COLOR_GRAY2BGR), self.rgb_image_local))
+
+		# Do it twice so the image is displayed correctly
+		cv2.imshow("Grab-Point", output)
+		cv2.waitKey(1)
+		rospy.sleep(0.1)
+		cv2.imshow("Grab-Point", output)
+		cv2.waitKey(1)
+
+		inp = raw_input("Grasp Point correct? y/n: ")[0]
+		return inp
+
+	def find_eoh(self):		# find end of handle
 		# Calculate the area around the center of the cup, where should be searched for the handle
-		# TODO: Don't search in area of the cup center
 		sizeFactor = 1.8
-		start_y = int(objCenterPX.x - sizeFactor*obj_radiusPX)
-		start_x = int(objCenterPX.y - sizeFactor*obj_radiusPX)
-		end_y = int(objCenterPX.x + sizeFactor*obj_radiusPX)
-		end_x = int(objCenterPX.y + sizeFactor*obj_radiusPX)
+		start_y = int(self.objCenterPX_local.x - sizeFactor*self.obj_radiusPX_local)
+		start_x = int(self.objCenterPX_local.y - sizeFactor*self.obj_radiusPX_local)
+		end_y = int(self.objCenterPX_local.x + sizeFactor*self.obj_radiusPX_local)
+		end_x = int(self.objCenterPX_local.y + sizeFactor*self.obj_radiusPX_local)
 		if start_y < 0:
 			start_y = 0
 		if start_x < 0:
 			start_x = 0
-		if end_y >= len(cv_depth_image[1]):
-			end_y = len(cv_depth_image[1])-1
-		if end_x >= len(cv_depth_image):
-			end_x = len(cv_depth_image)-1
+		if end_y >= len(self.cv_depth_image_local[1]):
+			end_y = len(self.cv_depth_image_local[1])-1
+		if end_x >= len(self.cv_depth_image_local):
+			end_x = len(self.cv_depth_image_local)-1
 
-		# Calculate the distance of every pixel which is black to the center of the cup
-		# TODO optimize function to be quicker
+		# Calculate the distance of every pixel which is black to the center of the cup to get end of handle
 		biggestDist = 0.0
 		biggestDistPos_px = Point()
 		for x in range(start_x, end_x):
 			for y in range(start_y, end_y):
-				if cv_depth_image[x][y] == 0:
-					dist = math.sqrt((objCenterPX.x-y)**2 + (objCenterPX.y-x)**2)
+				if self.cv_depth_image_local[x][y] == 0:
+					dist = math.sqrt((self.objCenterPX_local.x-y)**2 + (self.objCenterPX_local.y-x)**2)
 					if dist > biggestDist:
 						biggestDist = dist
 						biggestDistPos_px.x = y
 						biggestDistPos_px.y = x
-		# Store Point of Interest
+		# Store Point of Interest (end of handle)
 		poi = biggestDistPos_px
 		poi.x = int(poi.x)
 		poi.y = int(poi.y)
 
-		# Calculate grab-point and grab-pose
+		# Draw circles and lines for area of interest
+		cv2.circle(self.rgb_image_local ,(start_y, start_x),2,(0,255,0),3)
+		cv2.circle(self.rgb_image_local ,(start_y, end_x),2,(0,255,0),3)
+		cv2.circle(self.rgb_image_local ,(end_y, start_x),2,(0,255,0),3)
+		cv2.circle(self.rgb_image_local ,(end_y, end_x),2,(0,255,0),3)
+		cv2.line(self.rgb_image_local, (start_y, start_x), (end_y, start_x), (150,150,0))
+		cv2.line(self.rgb_image_local, (start_y, start_x), (start_y, end_x), (150,150,0))
+		cv2.line(self.rgb_image_local, (end_y, end_x), (start_y, end_x), (150,150,0))
+		cv2.line(self.rgb_image_local, (end_y, end_x), (end_y, start_x), (150,150,0))
+
+		# Draw circle for point of interest (outest point)
+		cv2.circle(self.rgb_image_local ,(poi.x, poi.y),2,(0,0,255),3)
+
+		return poi
+
+	# Calculate and publish pose where to grab the cup
+	def find_cup_graspPoint(self, threshold):
+		# Copy values and make sure the values are integers
+		self.objCenterPX_local = Point()
+		self.objCenterPX_local.x = int(self.objCenterPX.x)
+		self.objCenterPX_local.y = int(self.objCenterPX.y)
+		self.obj_radiusPX_local = int(self.obj_radiusPX)
+		self.cv_depth_image_local = self.cv_depth_image.copy()
+		self.rgb_image_local = self.cv_rgb_image.copy()
+
+		# Remove background and blur image
+		self.remove_bg(threshold, 5)
+
+		# Get end of handle
+		poi = find_eoh()
+
+		# Calculate grab-point and grab-pose if a poi (end of handle) has been found
 		grabPoint = Point()
-		if poi.x != 0:		# if a poi has been found TODO ELSE?
+		if poi.x != 0:
 			# Vector from poi to objCenter
 			v = Point()
-			v.x = objCenterPX.x - poi.x
-			v.y = objCenterPX.y - poi.y
+			v.x = self.objCenterPX_local.x - poi.x
+			v.y = self.objCenterPX_local.y - poi.y
 			# Length of vector v
-			lv = math.sqrt((objCenterPX.x - poi.x)**2 + (objCenterPX.y - poi.y)**2)
+			lv = math.sqrt((self.objCenterPX_local.x - poi.x)**2 + (self.objCenterPX_local.y - poi.y)**2)
 			# Resize vector to unit vector
 			v.x = v.x / lv
 			v.y = v.y / lv
 
 			# Grab-Point is in the middle between the poi and where v intersects with the radius
-			grabPoint.x = int(poi.x + v.x * (lv-obj_radiusPX)/2)
-			grabPoint.y = int(poi.y + v.y * (lv-obj_radiusPX)/2)
+			grabPoint.x = int(poi.x + v.x * (lv-self.obj_radiusPX_local)/2)
+			grabPoint.y = int(poi.y + v.y * (lv-self.obj_radiusPX_local)/2)
 			grabPoint.z = self.depth_array[grabPoint.y, grabPoint.x]
 
 			# Calculation of graspAngle of vecotr v to axis
@@ -270,84 +285,56 @@ class img_processing():
 			graspAngle = math.acos(dotProduct/(lv*lx_axis))
 
 			# Detect if angle is positive or negative
-			if poi.y > objCenterPX.y:
+			if poi.y > self.objCenterPX_local.y:
 				graspAngle = -graspAngle
 			print "Angle is: " + str(graspAngle*180/pi)
-			# Grabable between 0 and 180 degrees, if last joint is 90 degrees turned TODO different range due to mounting?
-			# TODO Calculate angle in case it is bigger than 90 deg (grabable?)
+			# Grabable between 0 and 180 degrees
 			if graspAngle < 0:
 				graspAngle = pi + graspAngle
 				print "Corrected to " + str(graspAngle*180/pi)
 
 			quats = tf.transformations.quaternion_from_euler(graspAngle+pi, -pi/2, pi/2, 'rzyx')
 
+			# Draw line from poi to center of cup
+			cv2.line(self.rgb_image_local, (self.objCenterPX_local.x, self.objCenterPX_local.y), (poi.x, poi.y), (150,150,0))
+			# Draw circle for border of cup
+			cv2.circle(self.rgb_image_local ,(self.objCenterPX_local.x, self.objCenterPX_local.y), self.obj_radiusPX_local, (0,255,0),2)
+			# Draw circle for center of cup
+			cv2.circle(self.rgb_image_local ,(self.objCenterPX_local.x, self.objCenterPX_local.y), 2, (0,0,255),3)
 			# Draw grab-point
-			cv2.circle(rgb_image ,(grabPoint.x, grabPoint.y), 2, (0,150,150),3)
+			cv2.circle(self.rgb_image_local ,(grabPoint.x, grabPoint.y), 2, (0,150,150),3)
 
-		# Draw circles and lines for area of interest
-		cv2.circle(rgb_image ,(start_y, start_x),2,(0,255,0),3)
-		cv2.circle(rgb_image ,(start_y, end_x),2,(0,255,0),3)
-		cv2.circle(rgb_image ,(end_y, start_x),2,(0,255,0),3)
-		cv2.circle(rgb_image ,(end_y, end_x),2,(0,255,0),3)
-		cv2.line(rgb_image, (start_y, start_x), (end_y, start_x), (150,150,0))
-		cv2.line(rgb_image, (start_y, start_x), (start_y, end_x), (150,150,0))
-		cv2.line(rgb_image, (end_y, end_x), (start_y, end_x), (150,150,0))
-		cv2.line(rgb_image, (end_y, end_x), (end_y, start_x), (150,150,0))
+			# Display grasp point and ask for user-input
+			inp = disp_graspPoint()
 
-		# Draw circle for border of cup
-		cv2.circle(rgb_image ,(objCenterPX.x, objCenterPX.y), obj_radiusPX, (0,255,0),2)
-		# Draw circle for center of cup
-		cv2.circle(rgb_image ,(objCenterPX.x, objCenterPX.y), 2, (0,0,255),3)
-		# Draw circle for point of interest (outest point)
-		cv2.circle(rgb_image ,(poi.x, poi.y),2,(0,0,255),3)
-		# Draw line from poi to center of cup
-		cv2.line(rgb_image, (objCenterPX.x, objCenterPX.y), (poi.x, poi.y), (150,150,0))
+			# If there is no depth value at grasp-point
+			if grabPoint.z == 0:
+				print "Depth-value invalid. Taking value from table height."
+				grabPoint.z = threshold - 100	# TODO correct value 
 
-		# Display the images
-		#bw_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2GRAY)
-		#output = np.hstack((cv_depth_image, bw_image))
-		output = np.hstack((cv2.cvtColor(cv_depth_image, cv2.COLOR_GRAY2BGR), rgb_image))
+			# If user input sait point is correct and point is valid
+			if grabPoint.z != 0 and inp == 'y':
+				grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
+				self.pub_object_pose(grabPoint, quats)
+				cv2.destroyAllWindows()
+				return True
 
-		# Do it twice so the image is displayed correctly
-		cv2.imshow("Grab-Point", output)
-		cv2.waitKey(1)
-		rospy.sleep(0.1)
-		cv2.imshow("Grab-Point", output)
-		cv2.waitKey(1)
-
-		inp = raw_input("point correct? y/n: ")[0]
-
-		if grabPoint.z == 0:
-			print "Depth-value invalid. Taking Value from publisher."
-			grabPoint.z = objCenterPX.z
-
-		if grabPoint.z != 0 and inp == 'y':
-			grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
-			self.pub_object_pose(grabPoint, quats)
-			#print grabPoint
-			cv2.destroyAllWindows()
-			return True
-		print "No depht-value, trying again"
+		# If user input said point is incorrect or handle has not been found
+		print "Trying again..."
+		cv2.destroyAllWindows()
 		return False
 
-	def find_bottle(self, threshold):
-		cv_depth_image = self.cv_depth_image.copy()
-		rgb_image = self.cv_rgb_image.copy()
+	def find_bottle_graspPoint(self, threshold):
+		self.cv_depth_image_local = self.cv_depth_image.copy()
+		self.rgb_image_local = self.cv_rgb_image.copy()
 
-		# TODO: Do it with threshold
-		for x in range(0, 480-1):
-			for y in range(0, 640-1):
-				if cv_depth_image[x][y] > threshold or x >= 450:
-					cv_depth_image[x][y] = 255
-				else:
-					cv_depth_image[x][y] = 0
-		cv_depth_image = np.uint8(cv_depth_image)
-
-		# Blur the image to lose small regions which could be detected wrong
-		cv_depth_image = cv2.medianBlur(cv_depth_image, 39)
+		# Remove background and blur image
+		self.remove_bg(threshold, 39)
 		
 		# Find circles
-		circles = cv2.HoughCircles(cv_depth_image, cv2.HOUGH_GRADIENT, 2, 200, param1=50,param2=30,minRadius=0,maxRadius=70)
+		circles = cv2.HoughCircles(self.cv_depth_image_local, cv2.HOUGH_GRADIENT, 2, 200, param1=50,param2=30,minRadius=0,maxRadius=70)
+
+		# If at least one circle has been detected
 		if type(circles) == np.ndarray:
 			circles = np.uint16(np.around(circles))		# circles[0] = x, 1 = y, 2 = R
 
@@ -355,43 +342,39 @@ class img_processing():
 			maxR = 0
 			actI = 0
 			biggestRIdx = 0
-			biggestCircle = 0
 			for i in circles[0,:]:
 				if i[2] > maxR:
 					maxR = i[2]
 					biggestRIdx = actI
 				actI = actI + 1
 
-			# Draw biggest circle onto image
-			for i in circles[0,:]:
-				cv2.circle(rgb_image, (i[0], i[1]), i[2], (0,255,0), 2)
-				cv2.circle(rgb_image, (i[0], i[1]), 2, (0,0,255), 3)
-			output = np.hstack((cv2.cvtColor(cv_depth_image, cv2.COLOR_GRAY2BGR), rgb_image))
-			cv2.imshow("Grasp Point", output)
-			cv2.waitKey(1)
-			rospy.sleep(0.5)
-			cv2.imshow("Grasp Point", output)
-			cv2.waitKey(1)
-
+			# Calculate Grasp-Point
 			grabPoint = Point()
-			grabPoint.x = 1*int(circles[0][biggestRIdx][0])
-			grabPoint.y = 1*int(circles[0][biggestRIdx][1])
+			grabPoint.x = int(circles[0][biggestRIdx][0])
+			grabPoint.y = int(circles[0][biggestRIdx][1])
 			grabPoint.z = self.depth_array[grabPoint.y, grabPoint.x]
 
-			inp = raw_input("point correct? y/n: ")[0]
+			# Draw biggest circle and its center into image
+			cv2.circle(self.rgb_image_local, (grabPoint.x, grabPoint.y), maxR, (0,255,0), 2)
+			cv2.circle(self.rgb_image_local, (grabPoint.x, grabPoint.y), 2, (0,0,255), 3)
 
+			# Display grasp point and ask for user-input
+			inp = disp_graspPoint()
+
+			# If there is no depth value at grasp-point
 			if grabPoint.z == 0:
-				print "Depth-value invalid. Taking Value from publisher."
-				#grabPoint.z = objCenterPX.z
+				print "Depth-value invalid. Taking value from table height."
+				grabPoint.z = threshold - 100	# TODO correct value 
 
+			# If user input sait point is correct and point is valid				
 			if grabPoint.z != 0 and inp == 'y':
-				grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z+50)		# +50 so it does not grab at the top
+				grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z + 50)		# +50 so it does not grab at the top of bottle
 				quats = tf.transformations.quaternion_from_euler(pi/2, 0, pi, 'rzyx')
 				self.pub_object_pose(grabPoint, quats)
-				#print grabPoint
 				cv2.destroyAllWindows()
 				return True
-			print "No depht-value, trying again"
+			print "Trying again..."
+			cv2.destroyAllWindows()
 			return False
 		else:
 			print "No bottle detected."
