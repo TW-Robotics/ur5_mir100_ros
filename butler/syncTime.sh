@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Script to sync time with MiR-Robot - run before start of ROS-Communication
+
 echo "Syncing time with MiR-Robot at IP 192.168.12.20..."
 
 echo "Syncing time..."
