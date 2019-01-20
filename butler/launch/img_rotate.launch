@@ -1,3 +1,4 @@
+<!-- Launches skript which rotates the camera's image as it is installed upside-down -->
 <launch>
 	<node pkg="butler" type="image_rotate.py" name="camera_rotate">
 		<param name="rotation_angle" value="180" />

@@ -1,3 +1,5 @@
+<!-- Publishes the correct position of gripper-tcp and camera to tf-tree -->
+<!-- Launches nodes to get transformations from and to tf-tree -->
 <launch>
 	<!-- Static transforms for camera_link, camera_frame and gripper -->
 	<node pkg="tf" type="static_transform_publisher" name="cameraLink_eeLink_publisher" args="0.010 0 0.06 0 0.707 0 0.707 ee_link camera_link 100" />
