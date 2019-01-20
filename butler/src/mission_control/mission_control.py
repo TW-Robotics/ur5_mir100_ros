@@ -1,47 +1,55 @@
 import sys
 import rospy
-import xml.etree.ElementTree as ET
 
-class missionGoal(object):
-	def __init__(self):
-		# Init empty goal
-		self.name = "none"
-		self.posx = 0
-		self.posy = 0
-		self.rz = 0
-		self.orientation = "none"
+''' Class handles goals of MiR '''
 
+class goal():
+	# Init empty goal
+	def __init__(self, goalName):
+		self.name = "invalid"
+		self.posx = 0 		# meters
+		self.posy = 0 		# meters
+		self.rz = 0 		# degrees
+		self.height = 0 	# mm
+		self.orientation = "invalid"	# left, right or front
+		
+		# Fill goal with useful information
+		self.createGoal(goalName)
+
+	# Check if goal-name exists and make goal
+	def createGoal(self, goalName):
+		if goalName == "table1":
+			self.name = "Table at MiR Charger"
+			self.posx = 5.12
+			self.posy = 4.11
+			self.rz = 87.4
+			self.height = 720
+			self.orientation = "right"
+		elif goalName == "table2":
+			self.name = "Table in front of workshop"
+			self.posx = 11.24
+			self.posy = 7.44
+			self.rz = -22.4
+			self.height = 600
+			self.orientation = "left"
+		elif goalName == "robot1":
+			self.name = "Robot workstation 1"
+			self.posx = 11.24
+			self.posy = 7.44
+			self.rz = -22.4
+			self.height = 850
+			self.orientation = "front"
+		return self
+
+	# Print information of goal
 	def display(self):
-		print "Goal: ", self.name
-		print "MIR: ", str(self.posx), str(self.posy), str(self.rz)
-		print "UR: ", self.orientation
-
-class parser(object):
-	#def __init__(self):
-
-	def parseGoals(self, path):
-		tree = ET.parse("xml/" + path)
-		root =  tree.getroot()
-
-		#numGoals = len(root)
-		goals = []
-
-		for goal in root.iter('goal'):
-			goalX = missionGoal()
-			goalX.name = goal.attrib["name"]
-			goalX.posx = goal.find("posx").text
-			goalX.posy = goal.find("posy").text
-			goalX.rz = goal.find("rz").text
-			goalX.orientation = goal.find("UROrientation").text
-			goals.append(goalX)
-
-		return goals
+		print " Goal: ", self.name, "Height: ", str(self.height), "mm"
+		print "  MIR: ", str(self.posx), str(self.posy), str(self.rz)
+		print "   UR: ", self.orientation
 
 def main(args):
-	goals = parser().parseGoals("goals.xml")
-	for goal in goals:
-		goal.display()
-	return
+	newm = goal("table1")
+	newm.display()
 
 if __name__ == '__main__':
 	main(sys.argv)
