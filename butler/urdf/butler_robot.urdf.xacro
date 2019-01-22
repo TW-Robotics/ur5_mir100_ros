@@ -1,5 +1,5 @@
-<!-- Build the complete robot of common-stuff, mir, ur, controlbox and eef. Loads all components and connects them -->
 <?xml version="1.0"?>
+<!-- Build the complete robot of common-stuff, mir, ur, controlbox and eef. Loads all components and connects them -->
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="ur5">
 
   <!-- common stuff -->

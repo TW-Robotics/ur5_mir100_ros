@@ -1,5 +1,5 @@
-<!-- Representation of the end-effector containing gripper and camera -->
 <?xml version="1.0"?>
+<!-- Representation of the end-effector containing gripper and camera -->
 <robot name="eef">
 	<!-- For Visual appearance of the EEF -->
 	<link name="eef">
