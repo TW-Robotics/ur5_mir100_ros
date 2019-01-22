@@ -47,8 +47,8 @@ class ur5Controler():
 		# Init variables
 		self.camToObj = Pose()
 		self.baseToObj = Pose()
-		self.floor_to_UR = 130 		# TODO to be measured in mm
-		self.pickUpHeight = 0 		# in m
+		self.floor_to_UR = 0 		# relative to base-footprint -> 0
+		self.pickUpHeight = 0 		# in m Table = 720mm -> 0.814
 
 		# Set True to make the program ask before the robot moves
 		self.checkBeforeDo = True
@@ -296,26 +296,32 @@ class ur5Controler():
 		jointStates = [110*pi/180, -pi/2, pi/2, -110*pi/180, -pi/2, 0]
 
 		if orientation == "left":
-			jointStates[0] = 110*pi/180
+			jointStates[0] = 65*pi/180
 		elif orientation == "right":
-			jointStates[0] = -100*pi/180
+			jointStates[0] = -115*pi/180
 		elif orientation == "front":
-			jointStates[0] = 0		# TODO correct value
+			jointStates[0] = -25*pi/180
 
 		self.execute_move(jointStates)
 
-		# TODO Test code
-		actPose = self.group.get_current_pose().pose
-		actPose.z = actPose.z - float(720) / 1000 + float(tableHeight) / 1000
-		self.execute_move(actPose)
+		# Correct height dependend on table height
+		if tableHeight != 720:
+			print "Correcting height"
+			actPose = self.group.get_current_pose().pose
+			actPose.position.z = actPose.position.z - float(720) / 1000 + float(tableHeight) / 1000
+			self.execute_move(actPose)
 
 	# Move the robot to the left/right and down to search the object
 	def searchObject(self, num):
 		if num == 0:
 			self.move_joint(0, 25)
 		elif num == 1:
-			self.move_joint(3, 15)
+			self.move_joint(0, 25)
 		elif num == 2:
+			self.move_joint(3, 15)
+		elif num == 3:
+			self.move_joint(0, -25)
+		elif num == 4:
 			self.move_joint(0, -25)
 		else:
 			return False
@@ -333,20 +339,13 @@ class ur5Controler():
 		goal_pose.position.x = self.baseToObj.position.x
 		goal_pose.position.y = self.baseToObj.position.y
 		#goal_pose.position.z = self.baseToObj.position.z + float(zDist) / 1000
-		goal_pose.position.z = float(zDist + tableHeight - self.floor_to_UR) / 1000 	# TODO Test code
+		goal_pose.position.z = float(zDist + tableHeight - self.floor_to_UR) / 1000
 
 		self.execute_move(goal_pose)
 
 	def moveToPreGrabbingPoseBottle(self):
 		goal_jointStates = self.group.get_current_joint_values()
-		goal_jointStates[1] = -1.2003753821002405
-		goal_jointStates[2] = 1.7064104080200195
-		goal_jointStates[3] = -0.4792559782611292
-		goal_jointStates[4] = 1.4872456789016724
-		goal_jointStates[5] = -3.133244339619772
-
-		#[-1.615082089100973, -1.2003753821002405, 1.7064104080200195, -0.4792559782611292, 1.4872456789016724, -3.133244339619772]
-		# Call function to move robot
+		goal_jointStates = [goal_jointStates[0], -70*pi/180, 100*pi/180, -30*pi/180, 85*pi/180, -180*pi/180]
 		self.execute_move(goal_jointStates)
 
 	# Move the robot to to the position of the grasping point (first above it) in the correct orientation
@@ -358,46 +357,59 @@ class ur5Controler():
 		self.execute_move(goal_pose)
 		# Store pickUpHeight to put down object later
 		self.pickUpHeight = goal_pose.position.z
+		print self.pickUpHeight
 
 	def moveToTransportPose(self, objectG):
 		if objectG == "bottle":
-			jointStates = [0.0578, -2.8086, 2.3535, 0.5217, 1.46010, -3.1305]
+			jointStates = [0, -160*pi/180, 135*pi/180, 30*pi/180, 90*pi/180, -180*pi/180]
 		elif objectG == "cup":
-			jointStates = [-0.019, -2.243, 2.329, -1.643, -1.576, 0]
+			jointStates = [0, -130*pi/180, 130*pi/180, -90*pi/180, -90*pi/180, 0]
 
 		self.execute_move(jointStates)
 
 	def moveToDrivingPose(self):
-		jointStates = [-0.019, -2.243, 2.329, -1.643, -1.576, 0]	# TODO correct angles
+		jointStates = [0, -180*pi/180, 150*pi/180, -150*pi/180, -90*pi/180, 0]
 		self.execute_move(jointStates)
 
-	def layDown(self, objectG, side, pickUpTableHeight, putDownTableHeight):	# TODO Add height
+	def layDown(self, objectG, side, pickUpTableHeight, putDownTableHeight):
+		# Move robot up if put-down height is greater than robots actual pose
+		actPose = self.group.get_current_pose().pose
+		newPose = self.group.get_current_pose().pose
+		newPose.position.z = float(putDownTableHeight + 150) / 1000
+		if newPose.position.z > actPose.position.z:
+			print "Driving up..."
+			self.execute_move(newPose)
+
+		# Turn to put down place
+		moveX = 0
+		moveY = 0
 		act_jointStates = self.group.get_current_joint_values()
 		if side == "left":
 			act_jointStates[0] = 90*pi/180
+			moveY = 0.5
 		elif side == "right":
 			act_jointStates[0] = -90*pi/180
+			moveY = -0.5
 		if side == "front":
-			act_jointStates[0] = 0  	# TODO correct values
+			act_jointStates[0] = 0
+			moveX = 0.5
+		print "Turning to put-down place..."
 		self.execute_move(act_jointStates)
 
-		# TODO get values which are over object for sure
-		# Drive to PRE-putDown-Pose
-		if objectG == "bottle":
-			jointStates = [-90*pi/180, -1.024, 2.221, -1.197, 1.451, -3.124]
-		elif objectG == "cup":
-			jointStates = [-90*pi/180, -1.135, 2.196, -2.630, -1.583, 0]
-		self.execute_move(jointStates)
+		# Drive over put down place
+		print "Moving over put-down place..."
+		self.move_xyz(moveX, moveY, 0)
 
-		# TODO Test code
 		# Drive down to putDown-Pose
 		actPose = self.group.get_current_pose().pose
-		pickUpHeight_overTable = self.pickUpHeight - float(pickUpTableHeight) / 1000	# + float(self.floor_to_UR) / 1000 
-		actPose.z = float(putDownTableHeight) / 1000 + pickUpHeight_overTable 			# - float(self.floor_to_UR) / 1000
+		pickUpHeight_overTable = self.pickUpHeight - float(pickUpTableHeight) / 1000	# + float(self.floor_to_UR) / 1000
+		actPose.position.z = float(putDownTableHeight) / 1000 + pickUpHeight_overTable 			# - float(self.floor_to_UR) / 1000
+		print actPose.position.z
+		print "Lying down..."
 		self.execute_move(actPose)
 
 	def tcp_to_floor(self):
-		UR_z = self.group.get_current_pose().pose.z * 1000 	# mm
+		UR_z = self.group.get_current_pose().pose.position.z * 1000 	# mm
 
 		return self.floor_to_UR + UR_z
 
@@ -408,22 +420,30 @@ def main(args):
 		ur5 = ur5Controler()
 
 		# Abstand floor_to_UR ermitteln
-		print ur5.group.get_current_pose().pose
+		#print ur5.group.get_current_pose().pose
 
 		# Search-Pose R1 ermitteln und Hoehe testen
-		print ur5.group.get_current_joint_values()
-		ur5.moveToSearchPose("left", 720)
-		ur5.moveToSearchPose("right", 620)
-		ur5.moveToSearchPose("front", 820)
+		#print ur5.group.get_current_joint_values()
+		#ur5.moveToSearchPose("right", 720)
+		#ur5.moveToSearchPose("left", 620)
+		#ur5.moveToSearchPose("left", 820)
+		#ur5.searchObject(0)
+		#ur5.searchObject(1)
+		#ur5.searchObject(2)
+		#ur5.searchObject(3)
+		#ur5.searchObject(4)
 
 		# Ueber Objekt fahren nur von Tischhoehe abhaengig
-		ur5.moveOverObject(300, 720)
+		#ur5.moveOverObject(300, 720)
 
 		# Driving-Pose ermitteln, layDown-Pose (R1 + andere) ermitteln
-		print ur5.group.get_current_joint_values()
+		#print ur5.group.get_current_joint_values()
+
+		#ur5.move_xyz(-0.1, 0, 0)
 
 		# layDown-Pose Hoehe testen
-		ur5.layDown("cup", "right", 720, 820)
+		print ur5.group.get_current_pose().pose
+		ur5.layDown("bottle", "left", 720, 720)
 
 		return
 

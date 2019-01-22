@@ -42,11 +42,12 @@ def main(args):
 		ur5.speed = 0.1
 
 		##### Make sure the gripper is open
-		#print "Calibrating gripper..."
-		#gripper.open()
-		#rospy.sleep(5)
+		print "Calibrating gripper..."
+		gripper.open()
+		rospy.sleep(5)
 
 		##### Move the UR to the Driving-Pose
+		print "Moving to driving pose..."
 		ur5.moveToDrivingPose()
 
 		##### Move the MiR to the Search-Goal
@@ -67,13 +68,14 @@ def main(args):
 		posID = 0
 		while imgProc.refresh_center_pos() == False:
 			print "Searching for object..."
+			rospy.rostime.wallsleep(1)
 			if ur5.searchObject(posID) == False:
 				print "No object found!"
 				return False
 			posID = posID + 1
 			rospy.rostime.wallsleep(1)
 
-		zDist = 300		# TODO make variable with table height?!
+		zDist = 300
 		##### Follow the found object - center it
 		while True:
 			print "Found Object... Centering"
@@ -91,10 +93,16 @@ def main(args):
 		print "Goal is reachable. Driving over cup..."
 		ur5.moveOverObject(zDist, pickUp.height)
 
-		if objectToSearch == "cup":
-			print "Correcting Position..."
-			imgProc.refresh_center_pos()
-			ur5.move_xyz(float(imgProc.objCenterM.y)/1000, float(imgProc.objCenterM.x)/1000, 0)
+		##### Correcting position
+		#if ur5.group.get_current_pose().pose.position.x < 0:
+		#	ur5.move_xyz(-0.07, 0, 0)
+		#else:
+		#	ur5.move_xyz(0.07, 0, 0)
+
+		#if objectToSearch == "cup":
+		#	print "Correcting Position..."
+		#	imgProc.refresh_center_pos()
+		#	ur5.move_xyz(float(imgProc.objCenterM.y)/1000, float(imgProc.objCenterM.x)/1000, 0)
 
 		##### Locating the grasping point
 		print "Analysing depth-image..."
@@ -104,9 +112,9 @@ def main(args):
 			threshold = ur5.tcp_to_floor() + 81 - pickUp.height 		# + 81 weil Kamera nicht am TCP ist
 			print threshold
 			if objectToSearch == "cup":
-				state = imgProc.find_cup_graspPoint(threshold)		    # TODO Test code
+				state = imgProc.find_cup_graspPoint(threshold)
 			elif objectToSearch == "bottle":
-				state = imgProc.find_bottle_graspPoint(threshold)		# WAR zDist + 81 (=381)
+				state = imgProc.find_bottle_graspPoint(threshold)
 			if state == True:
 				break
 		print "Found grasping point."

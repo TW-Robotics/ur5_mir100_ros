@@ -27,17 +27,17 @@ class goal():
 			self.orientation = "right"
 		elif goalName == "table2":
 			self.name = "Table in front of workshop"
-			self.posx = 11.24
-			self.posy = 7.44
-			self.rz = -22.4
-			self.height = 600
+			self.posx = 14.35
+			self.posy = 8.9
+			self.rz = 0
+			self.height = 720
 			self.orientation = "left"
 		elif goalName == "robot1":
 			self.name = "Robot workstation 1"
-			self.posx = 11.24
-			self.posy = 7.44
-			self.rz = -22.4
-			self.height = 850
+			self.posx = 8.7
+			self.posy = 11.9
+			self.rz = 100
+			self.height = 990
 			self.orientation = "front"
 		return self
 

@@ -254,7 +254,7 @@ class img_processing():
 		self.remove_bg(threshold, 5)
 
 		# Get end of handle
-		poi = find_eoh()
+		poi = self.find_eoh()
 
 		# Calculate grab-point and grab-pose if a poi (end of handle) has been found
 		grabPoint = Point()
@@ -305,12 +305,12 @@ class img_processing():
 			cv2.circle(self.rgb_image_local ,(grabPoint.x, grabPoint.y), 2, (0,150,150),3)
 
 			# Display grasp point and ask for user-input
-			inp = disp_graspPoint()
+			inp = self.disp_graspPoint()
 
 			# If there is no depth value at grasp-point
 			if grabPoint.z == 0:
 				print "Depth-value invalid. Taking value from table height."
-				grabPoint.z = threshold - 100	# TODO correct value 
+				grabPoint.z = threshold - 50
 
 			# If user input sait point is correct and point is valid
 			if grabPoint.z != 0 and inp == 'y':
@@ -359,12 +359,12 @@ class img_processing():
 			cv2.circle(self.rgb_image_local, (grabPoint.x, grabPoint.y), 2, (0,0,255), 3)
 
 			# Display grasp point and ask for user-input
-			inp = disp_graspPoint()
+			inp = self.disp_graspPoint()
 
 			# If there is no depth value at grasp-point
 			if grabPoint.z == 0:
 				print "Depth-value invalid. Taking value from table height."
-				grabPoint.z = threshold - 100	# TODO correct value 
+				grabPoint.z = threshold - 50 
 
 			# If user input sait point is correct and point is valid				
 			if grabPoint.z != 0 and inp == 'y':
