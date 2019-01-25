@@ -1,10 +1,13 @@
 import rospy
 import sys
+from std_msgs.msg import String
 from ur5_control import ur5_controller
 from img_processing import obj_localization
 from gripper_control import gripper_control
 from mir_control import mir_control
 from mission_control import mission_control
+
+''' Control all sub-components of the robot and execute grasp and transport task '''
 
 def main(args):
 	try:
@@ -22,9 +25,11 @@ def main(args):
 			pickUp = mission_control.goal(args[1])
 			putDown = mission_control.goal(args[2])
 			objectToSearch = args[3]
+			# If no valid goal has been given
 			if pickUp.name == "invalid" or putDown.name == "invalid":
 				print "  ERROR: Invalid goal name! Check names of goals with file mission_control.py."
 				return
+			# If no valid object-type has been given
 			if objectToSearch != "cup" and objectToSearch != "bottle":
 				print "  ERROR: Object-to-Search must be either 'cup' or 'bottle'."
 				return
@@ -33,13 +38,15 @@ def main(args):
 		print "transporting it to "
 		putDown.display()
 
+		# Initialize classes
 		ur5 = ur5_controller.ur5Controler()
 		imgProc = obj_localization.img_processing(objectToSearch)
 		mir = mir_control.mirControler()
 		gripper = gripper_control.gripper()
 
-		ur5.checkBeforeDo = True
-		ur5.speed = 0.1
+		# Set parameters for UR5
+		ur5.checkBeforeDo = True	# ATTENTION: If set false, the UR5 drives to goals without asking before
+		ur5.speed = 0.1 			# ATTENTION: Set between 0.1 and 1 - directly affects UR5 speed
 
 		##### Make sure the gripper is open
 		print "Calibrating gripper..."
@@ -50,7 +57,7 @@ def main(args):
 		print "Moving to driving pose..."
 		ur5.moveToDrivingPose()
 
-		##### Move the MiR to the Search-Goal
+		##### Send the MiR to the Search-Goal
 		inp = raw_input("Move MiR robot? y/n: ")[0]
 		if (inp == 'y'):
 			print "Moving MiR to goal-position..."
@@ -64,7 +71,7 @@ def main(args):
 		print "Moving robot to search position..."
 		ur5.moveToSearchPose(pickUp.orientation, pickUp.height)
 
-		# As long as the searched object is not visible
+		# Move the UR as long as the searched object is not visible
 		posID = 0
 		while imgProc.refresh_center_pos() == False:
 			print "Searching for object..."
@@ -75,8 +82,8 @@ def main(args):
 			posID = posID + 1
 			rospy.rostime.wallsleep(1)
 
-		zDist = 300
 		##### Follow the found object - center it
+		zDist = 300		# Distance to drive over object
 		while True:
 			print "Found Object... Centering"
 			imgProc.refresh_center_pos()
@@ -84,6 +91,7 @@ def main(args):
 			rospy.rostime.wallsleep(0.5)
 			imgProc.refresh_center_pos()
 			rospy.rostime.wallsleep(0.5)
+			# Check if object and pre-position is reachable
 			if ur5.isGoalReachable(zDist):
 				break
 			else:
@@ -109,17 +117,19 @@ def main(args):
 		while True:
 			print "Searching for grasping point..."
 			imgProc.refresh_center_pos()
-			threshold = ur5.tcp_to_floor() + 81 - pickUp.height 		# + 81 weil Kamera nicht am TCP ist
-			print threshold
+			# Calculate where to cut off background: +81 because camera is not at tcp
+			threshold = ur5.tcp_to_floor() + 81 - pickUp.height
 			if objectToSearch == "cup":
 				state = imgProc.find_cup_graspPoint(threshold)
 			elif objectToSearch == "bottle":
 				state = imgProc.find_bottle_graspPoint(threshold)
+			# Check if a valid grasp-point has been found
 			if state == True:
 				break
 		print "Found grasping point."
 		print "Moving to grasping point..."
-		rospy.rostime.wallsleep(0.5)	# needed to get actual position
+		# Wait to get actual position
+		rospy.rostime.wallsleep(0.5)
 		if objectToSearch == "bottle":
 			ur5.moveToPreGrabbingPoseBottle()
 		ur5.moveToGrabbingPose()
@@ -134,11 +144,11 @@ def main(args):
 			print "Error grasping object!"
 			return False
 
-		##### Move the robot up
+		##### Move the robot up and to transport-pose
 		ur5.move_xyz(0, 0, 0.1)
 		ur5.moveToTransportPose(objectToSearch)
 
-		##### Move the MiR to the Goal
+		##### Send the MiR to the Goal
 		inp = raw_input("Move MiR robot? y/n: ")[0]
 		if (inp == 'y'):
 			print "Moving MiR to goal-position..."
@@ -152,7 +162,7 @@ def main(args):
 		gripper.open()
 		rospy.sleep(5)
 
-		##### Move the UR back to safe pose
+		##### Move the UR back to safe driving-pose
 		ur5.move_xyz(0, 0, 0.1)
 		ur5.moveToDrivingPose()
 		return True

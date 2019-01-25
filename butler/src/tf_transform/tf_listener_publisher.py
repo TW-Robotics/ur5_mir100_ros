@@ -6,7 +6,7 @@ import sys
 from math import pi
 
 ''' Listen to transformation between object and base of robot
-	to make it turn correctly to it while searching it'''
+	to make it turn correctly to object while searching it'''
 
 # Convert lists to pose-obect so a standard pose message can be published
 def listToPose(trans, rot):

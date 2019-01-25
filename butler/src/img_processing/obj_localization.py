@@ -1,43 +1,29 @@
 #!/usr/bin/env python
-# Python libs
 import sys, time
-
-# numpy and scipy
 import numpy as np
-
-# OpenCV
-import cv2
 
 # Ros libraries
 import roslib
 import rospy
 
-# cv_bridge - needed to convert between ROS Image Msg and OpenCV cv::Mat
+# OpenCV
+import cv2
 from cv_bridge import CvBridge, CvBridgeError
 
 # Ros Messages
-from sensor_msgs.msg import CompressedImage
-from std_msgs.msg import String
 from sensor_msgs.msg import Image
 from darknet_ros_msgs.msg import BoundingBoxes
 from sensor_msgs.msg import CameraInfo
-from sensor_msgs.msg import PointCloud2
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Point
-import sensor_msgs.point_cloud2 as pc2
+
 import ur5_control
 import math
 from math import pi
-
-# for publishing coordinate frame
 import tf
 
-''' Class to subscribe to
-		- Output-Image from YOLOnet with bounding boxes
-		- Output-Array of bounding boxes (Positions of edges)
-		- Kamera-Image where the depth-image is aligned to the color-image
-		- Kamera-Calibration data
-	Calculates the position of the center of given object'''
+''' Calculate and publish pose of object and grasping points '''
+
 class img_processing():
 	def __init__(self, objectToSearch):
 		# Initialize CVBridge
@@ -45,21 +31,18 @@ class img_processing():
 
 		# Initialize class-variables
 		self.currentBoundingBoxes = BoundingBoxes()
-		self.objCenterPX = Point()	# Center of object in image coordinates (px)
+		self.objCenterPX = Point()			# Center of object in image coordinates (px)
 		self.objCenterM = Point()
-		self.obj_radiusPX = 0  # Radius of object in image coordinates (px)
+		self.obj_radiusPX = 0  				# Radius of object in image coordinates (px)
 		self.objectClass = objectToSearch
-		#self.cv_rgb_image = np.zeros((height,width,3), np.uint8)	# Currently not needed
-		#self.cv_depth_image = np.zeros((height,width,3), np.uint8)
-		#self.depth_array = 0
 		self.camInfo = CameraInfo()
 
 		# Initialize Publisher and Subscribers
-		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Pose, queue_size=1)	# Publish xyz-Position of object
-		rospy.Subscriber("/camera/color/image_raw_rotated", Image, self.image_callback, queue_size=1)				# YOLOnet Output-Image
-		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)	# Bounding-Box-Array
-		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)	# Depth-Image aligned to Color-Image
-		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)		# Camera Calibration
+		self.object_pos_pub = rospy.Publisher("/tf_objToCam", Pose, queue_size=1)											# Publish xyz-Position of object
+		rospy.Subscriber("/camera/color/image_raw_rotated", Image, self.image_callback, queue_size=1)						# YOLOnet Output-Image
+		rospy.Subscriber("/darknet_ros/bounding_boxes", BoundingBoxes, self.bounding_callback, queue_size=1)				# Bounding-Box-Array
+		rospy.Subscriber("/camera/aligned_depth_to_color/image_raw_rotated", Image, self.depth_callback, queue_size=1)		# Depth-Image aligned to Color-Image
+		rospy.Subscriber("/camera/aligned_depth_to_color/camera_info", CameraInfo, self.cameraInfo_callback, queue_size=1)	# Camera Calibration
 
 		# Wait for Subscribers to initialize
 		rospy.sleep(1)
@@ -67,8 +50,6 @@ class img_processing():
 	# Publish Pose of object
 	def pub_object_pose(self, xyz, rxyzw):
 		pubPose = Pose()
-		#pubPose.position.x = -float(xyz.y) / 1000
-		#pubPose.position.y = float(xyz.x) / 1000
 		pubPose.position.x = float(xyz.x) / 1000
 		pubPose.position.y = float(xyz.y) / 1000
 		pubPose.position.z = float(xyz.z) / 1000
@@ -83,21 +64,20 @@ class img_processing():
 	def cameraInfo_callback(self, data):
 		self.camInfo = data
 
-	# Check if there is a objectClass in an outerClass
+	# Get RGB-image and deep-copy it
 	def image_callback(self, data):
+		# Convert from ROS-Image to CV2::Mat and create a deep copy
 		try:
-			# Convert from ROS-Image to CV2::Mat
 			cv_rgb_image = self.bridge.imgmsg_to_cv2(data,"bgr8")
 			self.cv_rgb_image = cv_rgb_image.copy()
-			#self.locateObject()
 		except CvBridgeError as e:
 			print(e)
 
-	# Write bounding boxes to class-variable
+	# Get bounding boxes make them accesible in the class
 	def bounding_callback(self, data):
 		self.currentBoundingBoxes = data
 
-	# Calculate depth-image
+	# Get Depth-image and deep-copy it
 	def depth_callback(self, data):
 		try:
 			# Convert from ROS-Image to CV2::Mat
@@ -109,15 +89,18 @@ class img_processing():
 		except CvBridgeError as e:
 			print(e)
 
+	# Locate the object - wait before to make sure all topics are up-to-date
 	def refresh_center_pos(self):
 		rospy.rostime.wallsleep(0.1)
 		state = self.locateObject()
 		return state
 
+	# Calculate coordinates of object relative to camera
 	def locateObject(self):
-		# Check for object in found objects
+		# Check for object in found objects (bounding boxes)
 		for bounding_box in self.currentBoundingBoxes.bounding_boxes:
-			if (bounding_box.Class == self.objectClass or bounding_box.Class == "bowl"): #TODO delete bowl
+			if (bounding_box.Class == self.objectClass or bounding_box.Class == "bowl"): 			# TODO delete bowl
+				# Calculate center of object in x, y, z
 				self.objCenterPX.x = bounding_box.xmin + (bounding_box.xmax - bounding_box.xmin)/2
 				self.objCenterPX.y = bounding_box.ymin + (bounding_box.ymax - bounding_box.ymin)/2
 				self.objCenterPX.z = self.depth_array[self.objCenterPX.y][self.objCenterPX.x]
@@ -125,16 +108,16 @@ class img_processing():
 				# Draw circle on center of bounding box
 				cv2.circle(self.cv_depth_image,(self.objCenterPX.x, self.objCenterPX.y), 10, (0,0,0), -1)
 
-				# approximate if there is no depth-data
+				# Approximate if there is no depth-data
 				if self.objCenterPX.z == 0:
 					self.objCenterPX.z = self.distance_to_object_approximator(bounding_box.xmax - bounding_box.xmin)
 				
 				# Calculate and publish coordinates in mm (Center of image is zero)
 				self.objCenterM = self.calculate_center_coordinates(self.objCenterPX.x, self.objCenterPX.y, self.objCenterPX.z)
 				self.pub_object_pose(self.objCenterM, [0, 0, 0, 1])
-
 				#print "Center of box in mm (x, y, z): {0:3.0f}, {1:3.0f}, {2:3.0f}".format(x, y, z)
-				# Calculate smaller radius
+				
+				# Calculate the radius of the object for when located over it (smaller radius is radius of cup)
 				obj_radius1 = (bounding_box.xmax - bounding_box.xmin) / 2
 				obj_radius2 = (bounding_box.ymax - bounding_box.ymin) / 2
 				if obj_radius1 > obj_radius2:
@@ -147,7 +130,7 @@ class img_processing():
 		# Return True if found, otherwise False
 		return False
 
-	# Interpolation function based on real measurements
+	# Approximate distance to object if no depth-value in array. Interpolation function based on real measurements
 	def distance_to_object_approximator(self, px_width):
 		# Parameters can be found in excel-sheet. Times 10 to calculate distance in mm
 		return 5474.6*(px_width**-1.015)*10
@@ -164,6 +147,7 @@ class img_processing():
 
 		return center_point
 
+	# Remove the background of a depth image in a specified distance
 	def remove_bg(self, threshold, blurVal):
 		# Set all pixels to 255 which are farer away then "threshold" (depends on robot pre-position)
 		cv2.threshold(self.cv_depth_image_local, threshold, 255, cv2.THRESH_BINARY, self.cv_depth_image_local)
@@ -179,21 +163,23 @@ class img_processing():
 		# Blur the image to lose small regions which could be detected wrong
 		self.cv_depth_image_local = cv2.medianBlur(self.cv_depth_image_local, blurVal)
 
+	# Display the position of the calculated grasping-point in the RGB-image
 	def disp_graspPoint(self):
 		# Display the images
 		output = np.hstack((cv2.cvtColor(self.cv_depth_image_local, cv2.COLOR_GRAY2BGR), self.rgb_image_local))
 
 		# Do it twice so the image is displayed correctly
-		cv2.imshow("Grab-Point", output)
+		cv2.imshow("Grasp-Point", output)
 		cv2.waitKey(1)
 		rospy.sleep(0.1)
-		cv2.imshow("Grab-Point", output)
+		cv2.imshow("Grasp-Point", output)
 		cv2.waitKey(1)
 
 		inp = raw_input("Grasp Point correct? y/n: ")[0]
 		return inp
 
-	def find_eoh(self):		# find end of handle
+	# Find the end of the handle of the cup (eoh = end of handle)
+	def find_eoh(self):
 		# Calculate the area around the center of the cup, where should be searched for the handle
 		sizeFactor = 1.8
 		start_y = int(self.objCenterPX_local.x - sizeFactor*self.obj_radiusPX_local)
@@ -240,9 +226,9 @@ class img_processing():
 
 		return poi
 
-	# Calculate and publish pose where to grab the cup
+	# Calculate and publish pose where to grasp the cup
 	def find_cup_graspPoint(self, threshold):
-		# Copy values and make sure the values are integers
+		# Copy values so they don't change during calculation
 		self.objCenterPX_local = Point()
 		self.objCenterPX_local.x = int(self.objCenterPX.x)
 		self.objCenterPX_local.y = int(self.objCenterPX.y)
@@ -256,8 +242,8 @@ class img_processing():
 		# Get end of handle
 		poi = self.find_eoh()
 
-		# Calculate grab-point and grab-pose if a poi (end of handle) has been found
-		grabPoint = Point()
+		# Calculate grasp-point and grasp-pose if a poi (end of handle) has been found
+		graspPoint = Point()
 		if poi.x != 0:
 			# Vector from poi to objCenter
 			v = Point()
@@ -269,10 +255,10 @@ class img_processing():
 			v.x = v.x / lv
 			v.y = v.y / lv
 
-			# Grab-Point is in the middle between the poi and where v intersects with the radius
-			grabPoint.x = int(poi.x + v.x * (lv-self.obj_radiusPX_local)/2)
-			grabPoint.y = int(poi.y + v.y * (lv-self.obj_radiusPX_local)/2)
-			grabPoint.z = self.depth_array[grabPoint.y, grabPoint.x]
+			# Grasp-Point is in the middle between the poi and where v intersects with the radius
+			graspPoint.x = int(poi.x + v.x * (lv-self.obj_radiusPX_local)/2)
+			graspPoint.y = int(poi.y + v.y * (lv-self.obj_radiusPX_local)/2)
+			graspPoint.z = self.depth_array[graspPoint.y, graspPoint.x]
 
 			# Calculation of graspAngle of vecotr v to axis
 			# Make a vector along the x-axis
@@ -288,7 +274,7 @@ class img_processing():
 			if poi.y > self.objCenterPX_local.y:
 				graspAngle = -graspAngle
 			print "Angle is: " + str(graspAngle*180/pi)
-			# Grabable between 0 and 180 degrees
+			# Graspable between 0 and 180 degrees
 			if graspAngle < 0:
 				graspAngle = pi + graspAngle
 				print "Corrected to " + str(graspAngle*180/pi)
@@ -301,21 +287,21 @@ class img_processing():
 			cv2.circle(self.rgb_image_local ,(self.objCenterPX_local.x, self.objCenterPX_local.y), self.obj_radiusPX_local, (0,255,0),2)
 			# Draw circle for center of cup
 			cv2.circle(self.rgb_image_local ,(self.objCenterPX_local.x, self.objCenterPX_local.y), 2, (0,0,255),3)
-			# Draw grab-point
-			cv2.circle(self.rgb_image_local ,(grabPoint.x, grabPoint.y), 2, (0,150,150),3)
+			# Draw grasp-point
+			cv2.circle(self.rgb_image_local ,(graspPoint.x, graspPoint.y), 2, (0,150,150),3)
 
 			# Display grasp point and ask for user-input
 			inp = self.disp_graspPoint()
 
 			# If there is no depth value at grasp-point
-			if grabPoint.z == 0:
+			if graspPoint.z == 0:
 				print "Depth-value invalid. Taking value from table height."
-				grabPoint.z = threshold - 50
+				graspPoint.z = threshold - 50
 
 			# If user input sait point is correct and point is valid
-			if grabPoint.z != 0 and inp == 'y':
-				grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z)
-				self.pub_object_pose(grabPoint, quats)
+			if graspPoint.z != 0 and inp == 'y':
+				graspPoint = self.calculate_center_coordinates(graspPoint.x, graspPoint.y, graspPoint.z)
+				self.pub_object_pose(graspPoint, quats)
 				cv2.destroyAllWindows()
 				return True
 
@@ -324,6 +310,7 @@ class img_processing():
 		cv2.destroyAllWindows()
 		return False
 
+	# Calculate and publish pose where to grasp the bottle
 	def find_bottle_graspPoint(self, threshold):
 		self.cv_depth_image_local = self.cv_depth_image.copy()
 		self.rgb_image_local = self.cv_rgb_image.copy()
@@ -349,28 +336,28 @@ class img_processing():
 				actI = actI + 1
 
 			# Calculate Grasp-Point
-			grabPoint = Point()
-			grabPoint.x = int(circles[0][biggestRIdx][0])
-			grabPoint.y = int(circles[0][biggestRIdx][1])
-			grabPoint.z = self.depth_array[grabPoint.y, grabPoint.x]
+			graspPoint = Point()
+			graspPoint.x = int(circles[0][biggestRIdx][0])
+			graspPoint.y = int(circles[0][biggestRIdx][1])
+			graspPoint.z = self.depth_array[graspPoint.y, graspPoint.x]
 
 			# Draw biggest circle and its center into image
-			cv2.circle(self.rgb_image_local, (grabPoint.x, grabPoint.y), maxR, (0,255,0), 2)
-			cv2.circle(self.rgb_image_local, (grabPoint.x, grabPoint.y), 2, (0,0,255), 3)
+			cv2.circle(self.rgb_image_local, (graspPoint.x, graspPoint.y), maxR, (0,255,0), 2)
+			cv2.circle(self.rgb_image_local, (graspPoint.x, graspPoint.y), 2, (0,0,255), 3)
 
 			# Display grasp point and ask for user-input
 			inp = self.disp_graspPoint()
 
 			# If there is no depth value at grasp-point
-			if grabPoint.z == 0:
+			if graspPoint.z == 0:
 				print "Depth-value invalid. Taking value from table height."
-				grabPoint.z = threshold - 50 
+				graspPoint.z = threshold - 50 
 
 			# If user input sait point is correct and point is valid				
-			if grabPoint.z != 0 and inp == 'y':
-				grabPoint = self.calculate_center_coordinates(grabPoint.x, grabPoint.y, grabPoint.z + 50)		# +50 so it does not grab at the top of bottle
+			if graspPoint.z != 0 and inp == 'y':
+				graspPoint = self.calculate_center_coordinates(graspPoint.x, graspPoint.y, graspPoint.z + 50)		# +50 so it does not grasp at the top of bottle
 				quats = tf.transformations.quaternion_from_euler(pi/2, 0, pi, 'rzyx')
-				self.pub_object_pose(grabPoint, quats)
+				self.pub_object_pose(graspPoint, quats)
 				cv2.destroyAllWindows()
 				return True
 			print "Trying again..."
@@ -385,7 +372,7 @@ def main(args):
 	rospy.init_node('objectLocator', anonymous=True, disable_signals=True)
 	img_proc = img_processing("cup")
 
-	print img_proc.find_bottle(481)
+	print img_proc.find_bottle_graspPoint(481)
 
 	try:
 		rospy.spin()

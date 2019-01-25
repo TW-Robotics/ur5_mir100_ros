@@ -16,7 +16,7 @@ class mirControler():
 
 		# Init Subscriber and Publisher
 		rospy.Subscriber("/robot_pose", Pose, self.robotPose_callback, queue_size=1)		# get actual pose of robot
-		self.pub = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)		# published pose are driven to
+		self.pub = rospy.Publisher('move_base/goal', MoveBaseActionGoal, queue_size=10)		# published pose to drive to
 
 		# Wait for publisher to be registered
 		rospy.sleep(1)

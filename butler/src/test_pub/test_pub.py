@@ -13,17 +13,7 @@ from ur_msgs.msg import IOStates
 ioStates = IOStates()
 trueVar = True
 
-'''pub4 = rospy.Publisher('/ur_driver/io_states', IOStates, queue_size=10)
-
-def iostatesCallback(data):
-	global ioStates
-	ioStates = data
-	print "BEFORE"
-	print ioStates.digital_out_states[4].state
-	ioStates.digital_out_states[4].state = trueVar
-	print "AFTER"
-	print ioStates.digital_out_states[4].state
-	pub4.publish(ioStates)'''
+''' Test publisher to try stuff - not in use'''
 
 def main(args):
 	pub = rospy.Publisher('cmd_vel', geometry_msgs.msg.Twist, queue_size=10)

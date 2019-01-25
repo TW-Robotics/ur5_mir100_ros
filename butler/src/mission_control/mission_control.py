@@ -1,7 +1,12 @@
 import sys
 import rospy
 
-''' Class handles goals of MiR '''
+''' Class handles goals of MiR and UR '''
+''' To teach a new goal, send the MiR to a goal in the web-interface and
+    write x, y coordinates and orientation down. Then measure the height
+    of the table or platform and enter the orientation where the UR should
+    search. Give the goal a name and add it to createGoal(). You can then
+    call it with this name from robot_control.py '''
 
 class goal():
 	# Init empty goal
